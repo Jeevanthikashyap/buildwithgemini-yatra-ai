@@ -17,35 +17,35 @@
     --violet-dark: #5B21B6; /* Deep Velvet Violet */
     --violet-light: #F5F3FF; /* Violet Glow */
     
-    /* Light Mode (Default: crisp porcelain & pure white) */
+    /* Light Mode: Solid White response boxes & crisp contrast */
     --bg: #F8FAFC;
-    --panel-bg: rgba(255, 255, 255, 0.92);
-    --card-bg: rgba(255, 255, 255, 0.95);
-    --border: rgba(226, 232, 240, 0.85);
-    --border-light: rgba(241, 245, 249, 0.75);
+    --panel-bg: #FFFFFF;
+    --card-bg: #FFFFFF;
+    --border: #E2E8F0;
+    --border-light: #F1F5F9;
     --text-primary: #0F172A; /* Deep Obsidian Slate */
     --text-secondary: #475569; /* Slate Gray */
-    --agent-bubble: rgba(255, 255, 255, 0.95);
-    --input-bg: rgba(255, 255, 255, 0.9);
+    --agent-bubble: #FFFFFF; /* Solid Pure White Box */
+    --input-bg: #FFFFFF;
     --input-border: #CBD5E1;
-    --overlay-scrim: linear-gradient(180deg, rgba(248, 250, 252, 0.40) 0%, rgba(241, 245, 249, 0.60) 100%);
-    --glass-shadow: 0 8px 30px rgba(15, 23, 42, 0.12);
+    --overlay-scrim: transparent; /* No dull gradient: photo shows untouched */
+    --glass-shadow: 0 10px 30px rgba(15, 23, 42, 0.22);
   }
 
-  /* Dark Mode: Pure midnight black, obsidian & deep velvet violet */
+  /* Dark Mode: Solid Black response boxes & obsidian contrast */
   [data-theme="dark"] {
     --bg: #090D16;
-    --panel-bg: rgba(15, 23, 42, 0.85);
-    --card-bg: rgba(15, 23, 42, 0.90);
-    --border: rgba(51, 65, 85, 0.8);
-    --border-light: rgba(30, 41, 59, 0.7);
+    --panel-bg: #0D131F;
+    --card-bg: #0D131F;
+    --border: #334155;
+    --border-light: #1E293B;
     --text-primary: #F8FAFC;
     --text-secondary: #94A3B8;
-    --agent-bubble: rgba(15, 23, 42, 0.92);
-    --input-bg: rgba(15, 23, 42, 0.85);
+    --agent-bubble: #0D131F; /* Solid Deep Black Box */
+    --input-bg: #0D131F;
     --input-border: #334155;
-    --overlay-scrim: linear-gradient(180deg, rgba(9, 13, 22, 0.45) 0%, rgba(9, 13, 22, 0.70) 100%);
-    --glass-shadow: 0 8px 30px rgba(0, 0, 0, 0.55);
+    --overlay-scrim: transparent; /* No dull gradient */
+    --glass-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
   }
 
   * { box-sizing: border-box; }
@@ -140,18 +140,9 @@
     transition: background-image 0.8s ease-in-out;
     z-index: 0;
   }
-  /* Transparent scrim overlay: keeps real place vivid while ensuring text contrast */
+  /* Original wallpaper: completely untouched, no tint, no dull gradient, no blur */
   #wallpaper-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: var(--overlay-scrim);
-    backdrop-filter: blur(1.5px);
-    -webkit-backdrop-filter: blur(1.5px);
-    transition: background 0.3s ease;
-    z-index: 1;
+    display: none;
   }
 
   /* App Main Layout with Sidebar */
@@ -169,17 +160,17 @@
     width: 290px;
     background: var(--panel-bg);
     border-right: 1px solid var(--border);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
     display: flex;
     flex-direction: column;
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s ease;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s ease, margin 0.3s ease;
     z-index: 5;
     flex-shrink: 0;
   }
   #sidebar.collapsed {
     transform: translateX(-100%);
     width: 0;
+    margin-left: -290px;
     border-right: none;
     overflow: hidden;
   }
@@ -190,6 +181,11 @@
     justify-content: space-between;
     border-bottom: 1px solid var(--border);
   }
+  .sidebar-title-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
   .sidebar-title {
     font-size: 0.92rem;
     font-weight: 700;
@@ -198,6 +194,20 @@
     display: flex;
     align-items: center;
     gap: 0.45rem;
+  }
+  .sidebar-close-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 1.05rem;
+    padding: 0.2rem 0.45rem;
+    border-radius: 8px;
+    transition: all 0.15s ease;
+  }
+  .sidebar-close-btn:hover {
+    background: rgba(37, 99, 235, 0.1);
+    color: var(--accent);
   }
   .new-chat-btn {
     padding: 0.4rem 0.85rem;
@@ -589,7 +599,10 @@
   <!-- Chat History Sidebar -->
   <aside id="sidebar">
     <div class="sidebar-header">
-      <span class="sidebar-title">💬 Conversations</span>
+      <div class="sidebar-title-group">
+        <span class="sidebar-title">💬 Conversations</span>
+        <button type="button" id="sidebar-hide-btn" class="sidebar-close-btn" title="Minimize / Hide Sidebar">◀</button>
+      </div>
       <button type="button" id="new-chat-btn" class="new-chat-btn">
         <span>+</span>
         <span>New Chat</span>
@@ -1031,11 +1044,35 @@ function loadConversationUI(convo) {
   log.scrollTop = log.scrollHeight;
 }
 
-// Sidebar toggle button (☰)
+// Sidebar toggle button (☰) and minimize button (◀)
+const sidebarHideBtn = document.getElementById("sidebar-hide-btn");
+
+function setSidebarCollapsed(collapsed) {
+  if (collapsed) {
+    sidebar.classList.add("collapsed");
+    localStorage.setItem("yatra_sidebar_collapsed", "true");
+  } else {
+    sidebar.classList.remove("collapsed");
+    localStorage.setItem("yatra_sidebar_collapsed", "false");
+  }
+}
+
 if (sidebarToggle && sidebar) {
   sidebarToggle.addEventListener("click", () => {
-    sidebar.classList.toggle("collapsed");
+    const isCollapsed = sidebar.classList.contains("collapsed");
+    setSidebarCollapsed(!isCollapsed);
   });
+}
+
+if (sidebarHideBtn && sidebar) {
+  sidebarHideBtn.addEventListener("click", () => {
+    setSidebarCollapsed(true);
+  });
+}
+
+// Restore user sidebar preference (default expanded, can be collapsed)
+if (localStorage.getItem("yatra_sidebar_collapsed") === "true") {
+  sidebar.classList.add("collapsed");
 }
 
 if (newChatBtn) {
