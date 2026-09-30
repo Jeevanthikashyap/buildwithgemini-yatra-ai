@@ -16,16 +16,38 @@
     --violet-primary: #7C3AED; /* Elegant Violet */
     --violet-dark: #5B21B6; /* Deep Velvet Violet */
     --violet-light: #F5F3FF; /* Violet Glow */
-    --bg: #F8FAFC; /* Crisp Clean Slate White */
-    --panel-bg: #FFFFFF;
-    --border: #E2E8F0;
-    --border-light: #F1F5F9;
+    
+    /* Light Mode (Default: crisp porcelain & pure white) */
+    --bg: #F8FAFC;
+    --panel-bg: rgba(255, 255, 255, 0.92);
+    --card-bg: rgba(255, 255, 255, 0.95);
+    --border: rgba(226, 232, 240, 0.85);
+    --border-light: rgba(241, 245, 249, 0.75);
     --text-primary: #0F172A; /* Deep Obsidian Slate */
-    --text-secondary: #475569; /* Polished Slate Gray */
-    --user-bubble: linear-gradient(135deg, #1E3A8A 0%, #2563EB 50%, #7C3AED 100%);
-    --agent-bubble: #FFFFFF;
-    --glass-shadow: 0 4px 20px -2px rgba(30, 58, 138, 0.08), 0 2px 6px -1px rgba(0, 0, 0, 0.04);
+    --text-secondary: #475569; /* Slate Gray */
+    --agent-bubble: rgba(255, 255, 255, 0.95);
+    --input-bg: rgba(255, 255, 255, 0.9);
+    --input-border: #CBD5E1;
+    --overlay-scrim: linear-gradient(180deg, rgba(248, 250, 252, 0.40) 0%, rgba(241, 245, 249, 0.60) 100%);
+    --glass-shadow: 0 8px 30px rgba(15, 23, 42, 0.12);
   }
+
+  /* Dark Mode: Pure midnight black, obsidian & deep velvet violet */
+  [data-theme="dark"] {
+    --bg: #090D16;
+    --panel-bg: rgba(15, 23, 42, 0.85);
+    --card-bg: rgba(15, 23, 42, 0.90);
+    --border: rgba(51, 65, 85, 0.8);
+    --border-light: rgba(30, 41, 59, 0.7);
+    --text-primary: #F8FAFC;
+    --text-secondary: #94A3B8;
+    --agent-bubble: rgba(15, 23, 42, 0.92);
+    --input-bg: rgba(15, 23, 42, 0.85);
+    --input-border: #334155;
+    --overlay-scrim: linear-gradient(180deg, rgba(9, 13, 22, 0.45) 0%, rgba(9, 13, 22, 0.70) 100%);
+    --glass-shadow: 0 8px 30px rgba(0, 0, 0, 0.55);
+  }
+
   * { box-sizing: border-box; }
   body {
     margin: 0;
@@ -36,43 +58,76 @@
     flex-direction: column;
     height: 100vh;
     -webkit-font-smoothing: antialiased;
+    transition: background 0.3s ease, color 0.3s ease;
   }
   header {
-    background: linear-gradient(135deg, #0F172A 0%, #1E3A8A 55%, #6D28D9 100%);
+    background: linear-gradient(135deg, #090D16 0%, #1E3A8A 50%, #6D28D9 100%);
     color: #fff;
-    padding: 1.1rem 2rem;
+    padding: 0.9rem 1.8rem;
     font-weight: 700;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    box-shadow: 0 4px 20px rgba(15, 23, 42, 0.15);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    position: relative;
+    z-index: 10;
+  }
+  .brand-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
   }
   .brand-title {
     display: flex;
     align-items: center;
     gap: 0.65rem;
-    font-size: 1.25rem;
+    font-size: 1.22rem;
     letter-spacing: -0.02em;
   }
   .brand-badge {
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.18);
     backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 255, 255, 0.25);
-    padding: 0.25rem 0.65rem;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 0.22rem 0.6rem;
     border-radius: 20px;
-    font-size: 0.72rem;
+    font-size: 0.70rem;
     font-weight: 600;
     letter-spacing: 0.04em;
     text-transform: uppercase;
   }
   header .tagline {
-    font-size: 0.88rem;
+    font-size: 0.85rem;
     font-weight: 500;
     color: rgba(255, 255, 255, 0.9);
     letter-spacing: 0.01em;
   }
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+  }
+  .theme-toggle-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    background: rgba(255, 255, 255, 0.16);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #FFFFFF;
+    padding: 0.4rem 0.85rem;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.82rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(8px);
+  }
+  .theme-toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.28);
+    transform: translateY(-1px);
+  }
   
+  /* Full Vivid Chat Wallpaper */
   #wallpaper-bg {
     position: fixed;
     top: 0;
@@ -85,16 +140,17 @@
     transition: background-image 0.8s ease-in-out;
     z-index: 0;
   }
+  /* Transparent scrim overlay: keeps real place vivid while ensuring text contrast */
   #wallpaper-overlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: radial-gradient(circle at top right, rgba(124, 58, 237, 0.15), transparent 60%),
-                linear-gradient(180deg, rgba(248, 250, 252, 0.82) 0%, rgba(241, 245, 249, 0.90) 100%);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    background: var(--overlay-scrim);
+    backdrop-filter: blur(1.5px);
+    -webkit-backdrop-filter: blur(1.5px);
+    transition: background 0.3s ease;
     z-index: 1;
   }
   
@@ -119,21 +175,22 @@
     text-align: center;
     padding: 1.8rem 1.5rem;
     margin-bottom: 1.2rem;
-    background: rgba(255, 255, 255, 0.92);
-    border: 1px solid rgba(226, 232, 240, 0.9);
+    background: var(--card-bg);
+    border: 1px solid var(--border);
     border-radius: 20px;
-    box-shadow: 0 10px 25px -5px rgba(30, 58, 138, 0.08);
+    box-shadow: var(--glass-shadow);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     position: relative;
+    transition: background 0.3s ease, border-color 0.3s ease;
   }
   .wallpaper-tag {
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
     padding: 0.25rem 0.65rem;
-    background: rgba(37, 99, 235, 0.08);
-    border: 1px solid rgba(37, 99, 235, 0.18);
+    background: rgba(37, 99, 235, 0.12);
+    border: 1px solid rgba(37, 99, 235, 0.28);
     border-radius: 12px;
     font-size: 0.74rem;
     font-weight: 600;
@@ -143,7 +200,7 @@
   .welcome-banner h2 {
     margin: 0 0 0.5rem;
     font-size: 1.35rem;
-    color: var(--accent-dark);
+    color: var(--accent);
     font-weight: 700;
     letter-spacing: -0.02em;
   }
@@ -178,12 +235,12 @@
     box-shadow: 0 2px 8px rgba(30, 58, 138, 0.12);
   }
   .avatar.agent {
-    background: linear-gradient(135deg, #EEF2FF 0%, #EDE9FE 100%);
-    border: 1.5px solid #C7D2FE;
-    color: var(--accent);
+    background: linear-gradient(135deg, #1E3A8A 0%, #7C3AED 100%);
+    border: 1.5px solid rgba(255, 255, 255, 0.35);
+    color: #FFFFFF;
   }
   .avatar.user {
-    background: linear-gradient(135deg, #1E3A8A 0%, #7C3AED 100%);
+    background: linear-gradient(135deg, #2563EB 0%, #9333EA 100%);
     color: #fff;
     border: 1.5px solid rgba(255, 255, 255, 0.4);
   }
@@ -206,16 +263,17 @@
   .bubble {
     padding: 0.85rem 1.15rem;
     border-radius: 18px;
-    background: rgba(255, 255, 255, 0.94);
-    border: 1px solid rgba(226, 232, 240, 0.95);
+    background: var(--agent-bubble);
+    border: 1px solid var(--border);
     color: var(--text-primary);
     text-align: left;
     white-space: pre-wrap;
     line-height: 1.6;
     font-size: 0.95rem;
-    box-shadow: 0 4px 15px rgba(15, 23, 42, 0.05);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    box-shadow: var(--glass-shadow);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    transition: background 0.3s ease, border-color 0.3s ease;
   }
   .bubble a {
     color: var(--accent);
@@ -280,7 +338,7 @@
   }
   .chips-container::-webkit-scrollbar { display: none; }
   .chip {
-    background: #FFFFFF;
+    background: var(--card-bg);
     border: 1px solid var(--border);
     border-radius: 24px;
     padding: 0.5rem 1rem;
@@ -291,6 +349,7 @@
     white-space: nowrap;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+    backdrop-filter: blur(8px);
   }
   .chip:hover {
     background: var(--violet-light);
@@ -299,13 +358,20 @@
     transform: translateY(-1.5px);
     box-shadow: 0 4px 12px rgba(124, 58, 237, 0.15);
   }
+  [data-theme="dark"] .chip:hover {
+    background: rgba(124, 58, 237, 0.25);
+    color: #DDD6FE;
+  }
 
   /* Footer & Input */
   .footer-controls {
-    background: #FFFFFF;
+    background: var(--panel-bg);
     border-top: 1px solid var(--border);
     padding: 0.9rem 1.5rem 1.3rem;
-    box-shadow: 0 -4px 20px rgba(15, 23, 42, 0.03);
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    transition: background 0.3s ease, border-color 0.3s ease;
   }
   form {
     display: flex;
@@ -315,18 +381,17 @@
   input {
     flex: 1;
     padding: 0.85rem 1.2rem;
-    border: 1.5px solid var(--border);
+    border: 1.5px solid var(--input-border);
     border-radius: 14px;
     font-size: 0.95rem;
-    background: #F8FAFC;
+    background: var(--input-bg);
     color: var(--text-primary);
     transition: all 0.2s ease;
   }
   input:focus {
     outline: none;
     border-color: var(--accent);
-    background: #FFFFFF;
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25);
   }
   button.send-btn {
     padding: 0.85rem 1.5rem;
@@ -356,9 +421,12 @@
     border: 1px solid var(--border);
     border-radius: 16px;
     padding: 1.25rem;
-    background: #FFFFFF;
+    background: var(--card-bg);
     box-shadow: var(--glass-shadow);
     max-width: 100%;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    transition: background 0.3s ease, border-color 0.3s ease;
   }
   .a2card + .a2card, .a2col > .a2card { margin-top: 0.8rem; }
   .a2col { display: flex; flex-direction: column; gap: 0.5rem; }
@@ -377,11 +445,19 @@
 </head>
 <body>
 <header>
-  <div class="brand-title">
-    <span>🌐 YatraAI</span>
-    <span class="brand-badge">Global Concierge</span>
+  <div class="brand-left">
+    <div class="brand-title">
+      <span>🌐 YatraAI</span>
+      <span class="brand-badge">Global Concierge</span>
+    </div>
+    <span class="tagline">International Flights, Hotels &amp; Smart Transit</span>
   </div>
-  <span class="tagline">International Flights, Hotels &amp; Smart Transit</span>
+  <div class="header-actions">
+    <button type="button" id="theme-toggle" class="theme-toggle-btn" title="Switch between Light & Dark Mode">
+      <span id="theme-icon">🌙</span>
+      <span id="theme-label">Dark</span>
+    </button>
+  </div>
 </header>
 
 <div id="wallpaper-bg"></div>
@@ -705,6 +781,38 @@ document.querySelectorAll(".chip").forEach(btn => {
     if (prompt) sendMessage(prompt);
   });
 });
+
+/* ----------------------------------------------------------------------------
+ * Theme Mode Controller (Light = White default, Dark = Black/Obsidian)
+ * -------------------------------------------------------------------------- */
+const themeToggle = document.getElementById("theme-toggle");
+const themeIcon = document.getElementById("theme-icon");
+const themeLabel = document.getElementById("theme-label");
+
+function setTheme(theme) {
+  if (theme === "dark") {
+    document.documentElement.setAttribute("data-theme", "dark");
+    if (themeIcon) themeIcon.textContent = "☀️";
+    if (themeLabel) themeLabel.textContent = "Light";
+    localStorage.setItem("yatra_theme", "dark");
+  } else {
+    document.documentElement.removeAttribute("data-theme");
+    if (themeIcon) themeIcon.textContent = "🌙";
+    if (themeLabel) themeLabel.textContent = "Dark";
+    localStorage.setItem("yatra_theme", "light");
+  }
+}
+
+// Initial theme: default is white (light mode) unless user explicitly saved dark
+const savedTheme = localStorage.getItem("yatra_theme") || "light";
+setTheme(savedTheme);
+
+if (themeToggle) {
+  themeToggle.addEventListener("click", () => {
+    const currentTheme = document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light";
+    setTheme(currentTheme === "dark" ? "light" : "dark");
+  });
+}
 </script>
 </body>
 </html>
