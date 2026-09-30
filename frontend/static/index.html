@@ -175,25 +175,28 @@
     overflow: hidden;
   }
   .sidebar-header {
-    padding: 1.1rem 1.2rem;
+    padding: 1.1rem 1.1rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 0.5rem;
     border-bottom: 1px solid var(--border);
   }
   .sidebar-title-group {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.45rem;
+    flex-shrink: 0;
   }
   .sidebar-title {
-    font-size: 0.92rem;
+    font-size: 0.90rem;
     font-weight: 700;
     color: var(--accent);
     letter-spacing: 0.02em;
     display: flex;
     align-items: center;
-    gap: 0.45rem;
+    gap: 0.35rem;
+    white-space: nowrap;
   }
   .sidebar-close-btn {
     background: none;
@@ -201,7 +204,7 @@
     color: var(--text-secondary);
     cursor: pointer;
     font-size: 1.05rem;
-    padding: 0.2rem 0.45rem;
+    padding: 0.2rem 0.35rem;
     border-radius: 8px;
     transition: all 0.15s ease;
   }
@@ -210,17 +213,19 @@
     color: var(--accent);
   }
   .new-chat-btn {
-    padding: 0.4rem 0.85rem;
+    padding: 0.45rem 0.85rem;
     border-radius: 12px;
     border: 1px solid var(--accent);
     background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 50%, #7C3AED 100%);
     color: #FFFFFF;
-    font-size: 0.82rem;
+    font-size: 0.80rem;
     font-weight: 600;
     cursor: pointer;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 0.35rem;
+    white-space: nowrap; /* Single line, never breaks into two lines */
+    flex-shrink: 0;
     transition: all 0.2s ease;
     box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
   }
@@ -292,8 +297,9 @@
     flex-direction: column;
     max-width: 900px;
     width: 100%;
-    margin: 0 auto;
+    margin: 0 auto; /* Always centered in available space */
     overflow: hidden;
+    transition: all 0.3s ease;
   }
   #log {
     flex: 1;
@@ -309,8 +315,6 @@
     border: 1px solid var(--border);
     border-radius: 20px;
     box-shadow: var(--glass-shadow);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
     position: relative;
     transition: background 0.3s ease, border-color 0.3s ease;
   }
@@ -377,7 +381,7 @@
   .msg-content {
     display: flex;
     flex-direction: column;
-    max-width: 82%;
+    max-width: 84%;
   }
   .msg-row.user .msg-content {
     align-items: flex-end;
@@ -385,15 +389,17 @@
   .msg-sender {
     font-size: 0.74rem;
     font-weight: 600;
-    margin-bottom: 0.3rem;
-    color: var(--text-secondary);
+    margin-bottom: 0.35rem;
+    color: #FFFFFF;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
     padding: 0 0.35rem;
     letter-spacing: 0.02em;
   }
+  /* Contained Solid Box for Chat Responses */
   .bubble {
-    padding: 0.85rem 1.15rem;
+    padding: 1rem 1.25rem;
     border-radius: 18px;
-    background: var(--agent-bubble);
+    background: var(--agent-bubble); /* Solid pure white in Light mode, Solid black in Dark mode */
     border: 1px solid var(--border);
     color: var(--text-primary);
     text-align: left;
@@ -401,8 +407,6 @@
     line-height: 1.6;
     font-size: 0.95rem;
     box-shadow: var(--glass-shadow);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
     transition: background 0.3s ease, border-color 0.3s ease;
   }
   .bubble a {
@@ -422,7 +426,7 @@
     align-items: center;
     gap: 0.35rem;
     margin: 0.35rem 0.25rem 0.35rem 0;
-    padding: 0.35rem 0.85rem;
+    padding: 0.4rem 0.9rem;
     background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 50%, #7C3AED 100%);
     color: #FFFFFF !important;
     border-radius: 20px;
@@ -447,15 +451,24 @@
     border-top-right-radius: 4px;
     box-shadow: 0 4px 15px rgba(37, 99, 235, 0.28);
   }
+  /* Ensure A2UI cards are contained cleanly inside the solid bubble box */
   .bubble.rich {
-    background: transparent;
-    border: none;
-    padding: 0;
+    background: var(--agent-bubble);
+    border: 1px solid var(--border);
+    padding: 1.1rem 1.25rem;
     max-width: 100%;
     white-space: normal;
+    box-shadow: var(--glass-shadow);
+  }
+  .bubble.rich .a2card {
+    background: rgba(37, 99, 235, 0.04);
+    border: 1px solid var(--border);
     box-shadow: none;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
+    margin-top: 0.75rem;
+  }
+  [data-theme="dark"] .bubble.rich .a2card {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: var(--border);
   }
 
   /* Chips */
@@ -593,7 +606,6 @@
 </header>
 
 <div id="wallpaper-bg"></div>
-<div id="wallpaper-overlay"></div>
 
 <div id="app-layout">
   <!-- Chat History Sidebar -->
