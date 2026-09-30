@@ -692,41 +692,57 @@
   .hitl-btn-primary {
     display: inline-flex;
     align-items: center;
-    gap: 0.4rem;
-    padding: 0.6rem 1.15rem;
-    background: linear-gradient(135deg, #2563EB 0%, #7C3AED 100%);
-    color: #FFFFFF;
-    border: none;
-    border-radius: 10px;
-    font-size: 0.85rem;
-    font-weight: 600;
+    gap: 0.5rem;
+    padding: 0.7rem 1.25rem;
+    background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 50%, #7C3AED 100%);
+    color: #FFFFFF !important;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 12px;
+    font-size: 0.88rem;
+    font-weight: 700;
     cursor: pointer;
-    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
-    text-decoration: none;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+    text-decoration: none !important;
     transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .hitl-btn-primary span {
+    color: #FFFFFF !important;
+    font-weight: 700 !important;
   }
   .hitl-btn-primary:hover {
     transform: translateY(-1.5px);
-    box-shadow: 0 4px 14px rgba(124, 58, 237, 0.35);
+    box-shadow: 0 6px 18px rgba(124, 58, 237, 0.45);
+    color: #FFFFFF !important;
+    text-decoration: none !important;
+  }
+  [data-theme="dark"] .hitl-btn-primary {
+    background: linear-gradient(135deg, #1D4ED8 0%, #3B82F6 50%, #8B5CF6 100%);
+    border-color: rgba(255, 255, 255, 0.35);
+    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
   }
   .hitl-btn-confirm {
     display: inline-flex;
     align-items: center;
-    gap: 0.4rem;
-    padding: 0.6rem 1.15rem;
-    background: linear-gradient(135deg, #10B981 0%, #059669 100%);
-    color: #FFFFFF;
-    border: none;
-    border-radius: 10px;
-    font-size: 0.85rem;
-    font-weight: 600;
+    gap: 0.5rem;
+    padding: 0.7rem 1.25rem;
+    background: linear-gradient(135deg, #059669 0%, #10B981 100%);
+    color: #FFFFFF !important;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 12px;
+    font-size: 0.88rem;
+    font-weight: 700;
     cursor: pointer;
-    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.28);
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
     transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .hitl-btn-confirm span {
+    color: #FFFFFF !important;
+    font-weight: 700 !important;
   }
   .hitl-btn-confirm:hover {
     transform: translateY(-1.5px);
-    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
+    box-shadow: 0 6px 18px rgba(16, 185, 129, 0.45);
+    color: #FFFFFF !important;
   }
 
   /* Chips */
