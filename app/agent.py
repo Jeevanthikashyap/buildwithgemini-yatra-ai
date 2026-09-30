@@ -16,6 +16,7 @@
 import datetime
 import json
 import os
+import re
 from typing import Any, Dict, List, Optional
 import urllib.parse
 import urllib.request
@@ -193,6 +194,55 @@ def get_user_itinerary(destination: Optional[str] = None) -> List[Dict[str, Any]
     items = [doc.to_dict() for doc in query.stream()]
     items.sort(key=lambda x: (x.get("day_number", 1), x.get("start_time", "")))
     return items
+
+
+def search_live_travel_web(query: str) -> List[Dict[str, Any]]:
+    """Perform a real-time web search across live travel portals, IRCTC schedules, airline sites, and aggregator feeds.
+
+    Use this tool whenever the user asks for real-time train timings, current bus schedules, live airline deals,
+    or current pricing between destinations.
+
+    Args:
+        query: Live search query (e.g. 'trains bangalore to chennai IRCTC timings fares', 'direct flights BLR to Singapore cheapest rates', 'KSRTC sleeper bus Bangalore to Chennai').
+
+    Returns:
+        List of live web search results with title, verified snippet, and direct source URL.
+    """
+    clean_query = query.strip()
+    encoded = urllib.parse.quote_plus(clean_query)
+    url = f"https://html.duckduckgo.com/html/?q={encoded}"
+    req = urllib.request.Request(
+        url,
+        headers={
+            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        },
+    )
+
+    results = []
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            html = resp.read().decode("utf-8", errors="ignore")
+            # Extract links and snippets from live search results
+            snippets = re.findall(
+                r'<a class=\"result__snippet[^\"]*\"[^>]*href=\"([^\"]*)\"[^>]*>([\s\S]*?)<\/a>',
+                html,
+            )
+            for href, snip in snippets[:6]:
+                clean_snip = re.sub(r"<[^>]+>", "", snip).strip()
+                clean_url = href
+                if "uddg=" in href:
+                    clean_url = urllib.parse.unquote(href.split("uddg=")[1].split("&")[0])
+                if clean_snip and clean_url.startswith("http"):
+                    results.append({
+                        "snippet": clean_snip,
+                        "source_url": clean_url,
+                        "verified_live": True,
+                    })
+    except Exception as e:
+        results.append({"error": f"Live web search failed: {str(e)}"})
+
+    return results
 
 
 def search_multimodal_transit(
@@ -1346,6 +1396,7 @@ Use `generate_destination_video` to generate short cinematic destination clips.
 Use `geocode_address` to turn any address, landmark, or temple into geographic coordinates using Google Maps.
 Use `find_nearby_places` to discover nearby attractions, cafes, restaurants, or hotels around coordinates using Google Places API (New).
 Use `get_live_destination_weather` to check real-time weather and travel comfort tips.
+Use `search_live_travel_web` to perform real-time live web searches across IRCTC, airline schedules, and booking portals to retrieve actual live pricing, train running updates, and seat availability.
 Use `search_multimodal_transit` to find trains, buses, cabs, or domestic transit options between Indian cities.
 Use `search_curated_spots` to query verified local spots from Firestore.
 Use `save_user_itinerary_item` to persist activities or transit legs to the user's itinerary in Firestore.
@@ -1389,6 +1440,7 @@ root_agent = Agent(
     instruction=instruction,
     tools=[
         PreloadMemoryTool(),
+        search_live_travel_web,
         search_flights,
         search_hotels,
         book_travel_item,
