@@ -24,7 +24,9 @@ Run:
   python main.py                 # -> http://localhost:8080
 """
 
+import json
 import os
+import re
 import uuid
 
 import google.auth
@@ -127,13 +129,36 @@ def _extract_parts(parts: list) -> list[dict]:
     Text parts pass through as {"kind": "text"}. A2UI data parts (tagged
     application/json+a2ui) become {"kind": "a2ui", "data": <message>} so the UI
     renders the card; each data part is one A2UI message (beginRendering or
-    surfaceUpdate).
+    surfaceUpdate). If <a2ui-json>...</a2ui-json> is embedded in text, it extracts
+    the A2UI messages for card rendering and cleans up the prose.
     """
     out: list[dict] = []
     for p in parts:
         root = getattr(p, "root", p)
         if isinstance(root, TextPart) and getattr(root, "text", None):
-            out.append({"kind": "text", "text": root.text})
+            raw_text = root.text
+            # Check for embedded <a2ui-json>...</a2ui-json> or <a2a_datapart_json>...</a2a_datapart_json>
+            pattern = re.compile(r"<(?:a2ui-json|a2a_datapart_json)>(.*?)</(?:a2ui-json|a2a_datapart_json)>", re.DOTALL | re.IGNORECASE)
+            matches = list(pattern.finditer(raw_text))
+            if matches:
+                # Extract any A2UI JSON payload
+                for m in matches:
+                    json_str = m.group(1).strip()
+                    try:
+                        parsed = json.loads(json_str)
+                        if isinstance(parsed, list):
+                            for item in parsed:
+                                out.append({"kind": "a2ui", "data": item})
+                        elif isinstance(parsed, dict):
+                            out.append({"kind": "a2ui", "data": parsed})
+                    except Exception:
+                        pass
+                # Strip out the raw tag blocks so the user sees clean prose
+                cleaned_text = pattern.sub("", raw_text).strip()
+                if cleaned_text:
+                    out.append({"kind": "text", "text": cleaned_text})
+            else:
+                out.append({"kind": "text", "text": raw_text})
         elif getattr(root, "data", None) is not None:
             raw_data = root.data
             meta = getattr(root, "metadata", None) or {}

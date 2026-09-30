@@ -105,26 +105,26 @@
   .header-actions {
     display: flex;
     align-items: center;
-    gap: 0.85rem;
+    gap: 0.65rem;
   }
-  .theme-toggle-btn {
+  .header-icon-btn {
     display: flex;
     align-items: center;
-    gap: 0.45rem;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
     background: rgba(255, 255, 255, 0.16);
     border: 1px solid rgba(255, 255, 255, 0.3);
     color: #FFFFFF;
-    padding: 0.4rem 0.85rem;
-    border-radius: 20px;
+    border-radius: 50%;
     cursor: pointer;
-    font-size: 0.82rem;
-    font-weight: 600;
+    font-size: 1.1rem;
     transition: all 0.2s ease;
     backdrop-filter: blur(8px);
   }
-  .theme-toggle-btn:hover {
+  .header-icon-btn:hover {
     background: rgba(255, 255, 255, 0.28);
-    transform: translateY(-1px);
+    transform: translateY(-1.5px);
   }
   
   /* Full Vivid Chat Wallpaper */
@@ -153,14 +153,134 @@
     transition: background 0.3s ease;
     z-index: 1;
   }
-  
-  #chat-wrapper {
+
+  /* App Main Layout with Sidebar */
+  #app-layout {
     position: relative;
     z-index: 2;
     flex: 1;
     display: flex;
+    height: calc(100vh - 65px);
+    overflow: hidden;
+  }
+
+  /* Chat Sidebar */
+  #sidebar {
+    width: 290px;
+    background: var(--panel-bg);
+    border-right: 1px solid var(--border);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    display: flex;
     flex-direction: column;
-    max-width: 860px;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s ease;
+    z-index: 5;
+    flex-shrink: 0;
+  }
+  #sidebar.collapsed {
+    transform: translateX(-100%);
+    width: 0;
+    border-right: none;
+    overflow: hidden;
+  }
+  .sidebar-header {
+    padding: 1.1rem 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+  .sidebar-title {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.02em;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+  }
+  .new-chat-btn {
+    padding: 0.4rem 0.85rem;
+    border-radius: 12px;
+    border: 1px solid var(--accent);
+    background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 50%, #7C3AED 100%);
+    color: #FFFFFF;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+  }
+  .new-chat-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.35);
+  }
+  .conversation-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.8rem 0.65rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+  }
+  .convo-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.65rem 0.85rem;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 0.88rem;
+    color: var(--text-primary);
+    border: 1px solid transparent;
+    transition: all 0.15s ease;
+    background: transparent;
+  }
+  .convo-item:hover {
+    background: rgba(37, 99, 235, 0.08);
+    border-color: rgba(37, 99, 235, 0.2);
+  }
+  .convo-item.active {
+    background: rgba(37, 99, 235, 0.14);
+    border-color: var(--accent);
+    font-weight: 600;
+  }
+  .convo-title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .delete-convo-btn {
+    opacity: 0;
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 0.1rem 0.3rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    transition: opacity 0.15s, color 0.15s;
+  }
+  .convo-item:hover .delete-convo-btn {
+    opacity: 1;
+  }
+  .delete-convo-btn:hover {
+    color: #EF4444;
+  }
+  
+  #chat-wrapper {
+    position: relative;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    max-width: 900px;
     width: 100%;
     margin: 0 auto;
     overflow: hidden;
@@ -446,6 +566,9 @@
 <body>
 <header>
   <div class="brand-left">
+    <button type="button" id="sidebar-toggle" class="header-icon-btn" title="Toggle Chat History Sidebar">
+      <span>☰</span>
+    </button>
     <div class="brand-title">
       <span>🌐 YatraAI</span>
       <span class="brand-badge">Global Concierge</span>
@@ -453,9 +576,8 @@
     <span class="tagline">International Flights, Hotels &amp; Smart Transit</span>
   </div>
   <div class="header-actions">
-    <button type="button" id="theme-toggle" class="theme-toggle-btn" title="Switch between Light & Dark Mode">
+    <button type="button" id="theme-toggle" class="header-icon-btn" title="Toggle Light/Dark Theme">
       <span id="theme-icon">🌙</span>
-      <span id="theme-label">Dark</span>
     </button>
   </div>
 </header>
@@ -463,30 +585,47 @@
 <div id="wallpaper-bg"></div>
 <div id="wallpaper-overlay"></div>
 
-<div id="chat-wrapper">
-  <div id="log">
-    <div class="welcome-banner">
-      <div id="wallpaper-location-badge" class="wallpaper-tag">📍 Exploring Exotic World Destinations</div>
-      <h2>✨ Welcome to YatraAI Concierge</h2>
-      <p>Your intelligent, luxury companion for global flights, handpicked hotels, instant confirmed bookings, and real-time multi-modal price drop alerts.</p>
-    </div>
-  </div>
-
-  <div class="footer-controls">
-    <div class="chips-container" id="chips">
-      <button type="button" class="chip" data-prompt="Find the cheapest flights from Bangalore to Singapore next month under ₹20,000">✈️ Cheap Flights to Singapore</button>
-      <button type="button" class="chip" data-prompt="Search 4-star hotels in Dubai near Dubai Marina with Indian vegetarian food options">🏨 Dubai Hotels (Veg friendly)</button>
-      <button type="button" class="chip" data-prompt="Set up a price drop alert for flights from Bangalore to Singapore and check active alerts">🔔 Price Drop Watch &amp; Alerts</button>
-      <button type="button" class="chip" data-prompt="Plan 3 days in Hampi, vegetarian, slow pace, under ₹15,000">🏛️ 3 Days in Hampi (Veg, ₹15k)</button>
-    </div>
-    <form id="form">
-      <input id="input" placeholder="Ask YatraAI anything about your trip…" autocomplete="off" autofocus>
-      <button class="send-btn">
-        <span>Send</span>
-        <span>➤</span>
+<div id="app-layout">
+  <!-- Chat History Sidebar -->
+  <aside id="sidebar">
+    <div class="sidebar-header">
+      <span class="sidebar-title">💬 Conversations</span>
+      <button type="button" id="new-chat-btn" class="new-chat-btn">
+        <span>+</span>
+        <span>New Chat</span>
       </button>
-    </form>
-  </div>
+    </div>
+    <div class="conversation-list" id="convo-list">
+      <!-- Conversation items rendered dynamically -->
+    </div>
+  </aside>
+
+  <!-- Main Chat Conversation Wrapper -->
+  <main id="chat-wrapper">
+    <div id="log">
+      <div class="welcome-banner">
+        <div id="wallpaper-location-badge" class="wallpaper-tag">📍 Exploring Exotic World Destinations</div>
+        <h2>✨ Welcome to YatraAI Concierge</h2>
+        <p>Your intelligent, luxury companion for global flights, handpicked hotels, instant confirmed bookings, and real-time multi-modal price drop alerts.</p>
+      </div>
+    </div>
+
+    <div class="footer-controls">
+      <div class="chips-container" id="chips">
+        <button type="button" class="chip" data-prompt="Find the cheapest flights from Bangalore to Singapore next month under ₹20,000">✈️ Cheap Flights to Singapore</button>
+        <button type="button" class="chip" data-prompt="Search 4-star hotels in Dubai near Dubai Marina with Indian vegetarian food options">🏨 Dubai Hotels (Veg friendly)</button>
+        <button type="button" class="chip" data-prompt="Set up a price drop alert for flights from Bangalore to Singapore and check active alerts">🔔 Price Drop Watch &amp; Alerts</button>
+        <button type="button" class="chip" data-prompt="Plan 3 days in Hampi, vegetarian, slow pace, under ₹15,000">🏛️ 3 Days in Hampi (Veg, ₹15k)</button>
+      </div>
+      <form id="form">
+        <input id="input" placeholder="Ask YatraAI anything about your trip…" autocomplete="off" autofocus>
+        <button class="send-btn">
+          <span>Send</span>
+          <span>➤</span>
+        </button>
+      </form>
+    </div>
+  </main>
 </div>
 
 <script>
@@ -656,12 +795,31 @@ function formatTextWithLinks(container, text) {
 function renderReply(b, parts) {
   b.textContent = "";   // clear the "…" placeholder
   const texts = parts.filter(p => p && (p.kind === "text" || (!p.kind && p.text))).map(p => p.text || "");
-  const a2ui = parts.filter(p => p && p.kind === "a2ui" && p.data).map(p => p.data);
+  let a2ui = parts.filter(p => p && p.kind === "a2ui" && p.data).map(p => p.data);
 
-  const textStr = texts.join("\n").trim();
-  if (textStr) {
+  let fullText = texts.join("\n").trim();
+
+  // If the agent emitted raw <a2ui-json>...</a2ui-json> blocks in text, parse them
+  const a2uiTagRegex = /<(?:a2ui-json|a2a_datapart_json)>([\s\S]*?)<\/(?:a2ui-json|a2a_datapart_json)>/gi;
+  let match;
+  while ((match = a2uiTagRegex.exec(fullText)) !== null) {
+    try {
+      const parsed = JSON.parse(match[1].trim());
+      if (Array.isArray(parsed)) {
+        a2ui = a2ui.concat(parsed);
+      } else if (parsed && typeof parsed === "object") {
+        a2ui.push(parsed);
+      }
+    } catch (e) {
+      console.warn("Failed to parse embedded a2ui json", e);
+    }
+  }
+  // Strip the raw tag blocks so users see only clean prose
+  fullText = fullText.replace(a2uiTagRegex, "").trim();
+
+  if (fullText) {
     const textDiv = el("div", null);
-    formatTextWithLinks(textDiv, textStr);
+    formatTextWithLinks(textDiv, fullText);
     b.appendChild(textDiv);
   }
 
@@ -669,8 +827,8 @@ function renderReply(b, parts) {
     b.classList.add("rich");
     if (!renderSurface(a2ui, b)) {
       const fallbackDiv = el("div", null);
-      formatTextWithLinks(fallbackDiv, flattenText(a2ui) || "(no card content)");
-      b.appendChild(fallbackDiv);
+      formatTextWithLinks(fallbackDiv, flattenText(a2ui) || "");
+      if (fallbackDiv.childNodes.length) b.appendChild(fallbackDiv);
     }
   }
   if (!b.childNodes.length) b.textContent = "(no response)";
@@ -752,18 +910,188 @@ function applyRandomWallpaper() {
 // Apply wallpaper immediately upon opening the app
 applyRandomWallpaper();
 
+/* ----------------------------------------------------------------------------
+ * Conversation Manager & Sidebar Controller
+ * -------------------------------------------------------------------------- */
+const convoList = document.getElementById("convo-list");
+const newChatBtn = document.getElementById("new-chat-btn");
+const sidebar = document.getElementById("sidebar");
+const sidebarToggle = document.getElementById("sidebar-toggle");
+
+let conversations = [];
+try {
+  conversations = JSON.parse(localStorage.getItem("yatra_conversations") || "[]");
+} catch (e) {
+  conversations = [];
+}
+
+let activeConvoId = localStorage.getItem("yatra_active_convo_id");
+
+function saveConversations() {
+  localStorage.setItem("yatra_conversations", JSON.stringify(conversations));
+  if (activeConvoId) {
+    localStorage.setItem("yatra_active_convo_id", activeConvoId);
+  }
+}
+
+function renderSidebar() {
+  convoList.innerHTML = "";
+  if (!conversations.length) {
+    const emptyNotice = el("div", "convo-item", "No past chats yet");
+    emptyNotice.style.opacity = "0.6";
+    emptyNotice.style.cursor = "default";
+    convoList.appendChild(emptyNotice);
+    return;
+  }
+
+  conversations.forEach(c => {
+    const item = el("div", "convo-item" + (c.id === activeConvoId ? " active" : ""));
+    item.setAttribute("data-id", c.id);
+
+    const titleDiv = el("div", "convo-title");
+    titleDiv.innerHTML = `<span>💬</span> <span>${c.title || "Travel Plan"}</span>`;
+
+    const delBtn = el("button", "delete-convo-btn", "✕");
+    delBtn.title = "Delete chat";
+    delBtn.onclick = (e) => {
+      e.stopPropagation();
+      deleteConversation(c.id);
+    };
+
+    item.appendChild(titleDiv);
+    item.appendChild(delBtn);
+
+    item.onclick = () => {
+      selectConversation(c.id);
+    };
+
+    convoList.appendChild(item);
+  });
+}
+
+function startNewChat() {
+  const newId = "convo-" + Date.now();
+  const newConvo = {
+    id: newId,
+    title: "New Itinerary",
+    messages: [],
+    createdAt: new Date().toISOString()
+  };
+  conversations.unshift(newConvo);
+  activeConvoId = newId;
+  saveConversations();
+  renderSidebar();
+  loadConversationUI(newConvo);
+}
+
+function deleteConversation(id) {
+  conversations = conversations.filter(c => c.id !== id);
+  if (activeConvoId === id) {
+    if (conversations.length) {
+      selectConversation(conversations[0].id);
+    } else {
+      startNewChat();
+    }
+  } else {
+    saveConversations();
+    renderSidebar();
+  }
+}
+
+function selectConversation(id) {
+  activeConvoId = id;
+  saveConversations();
+  renderSidebar();
+  const convo = conversations.find(c => c.id === id);
+  if (convo) {
+    loadConversationUI(convo);
+  }
+}
+
+function loadConversationUI(convo) {
+  log.innerHTML = "";
+  const banner = el("div", "welcome-banner");
+  banner.innerHTML = `
+    <div id="wallpaper-location-badge" class="wallpaper-tag">📍 Exploring Exotic World Destinations</div>
+    <h2>✨ Welcome to YatraAI Concierge</h2>
+    <p>Your intelligent, luxury companion for global flights, handpicked hotels, instant confirmed bookings, and real-time multi-modal price drop alerts.</p>
+  `;
+  log.appendChild(banner);
+
+  if (convo && convo.messages) {
+    convo.messages.forEach(m => {
+      const b = bubble(m.role);
+      if (m.role === "user") {
+        b.textContent = m.text;
+      } else {
+        renderReply(b, m.parts || [{ kind: "text", text: m.text }]);
+      }
+    });
+  }
+  log.scrollTop = log.scrollHeight;
+}
+
+// Sidebar toggle button (☰)
+if (sidebarToggle && sidebar) {
+  sidebarToggle.addEventListener("click", () => {
+    sidebar.classList.toggle("collapsed");
+  });
+}
+
+if (newChatBtn) {
+  newChatBtn.addEventListener("click", () => {
+    startNewChat();
+  });
+}
+
+// Initialize active conversation from storage
+if (!conversations.length) {
+  startNewChat();
+} else {
+  if (!activeConvoId || !conversations.find(c => c.id === activeConvoId)) {
+    activeConvoId = conversations[0].id;
+  }
+  renderSidebar();
+  const curr = conversations.find(c => c.id === activeConvoId);
+  if (curr) loadConversationUI(curr);
+}
+
 async function sendMessage(text) {
   if (!text) return;
+  
+  let currentConvo = conversations.find(c => c.id === activeConvoId);
+  if (!currentConvo) {
+    startNewChat();
+    currentConvo = conversations.find(c => c.id === activeConvoId);
+  }
+
+  // Update conversation title from first user query
+  if (currentConvo.messages.length === 0) {
+    currentConvo.title = text.length > 28 ? text.substring(0, 28) + "…" : text;
+    renderSidebar();
+  }
+
   bubble("user").textContent = text;
+  currentConvo.messages.push({ role: "user", text: text });
+  saveConversations();
+
   input.value = "";
   const b = bubble("agent"); b.textContent = "…";
+  
   try {
-    const res = await fetch("/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: text }) });
+    const res = await fetch("/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: text, user_id: currentConvo.id })
+    });
     const raw = await res.text();
     let data;
     try { data = JSON.parse(raw); }
     catch { throw new Error(`Server returned non-JSON (HTTP ${res.status}). ${raw.slice(0, 300)}`); }
+    
     renderReply(b, data.parts || []);
+    currentConvo.messages.push({ role: "agent", parts: data.parts || [], text: "" });
+    saveConversations();
   } catch (e) {
     b.textContent = "Error: " + e.message;
   }
@@ -783,22 +1111,20 @@ document.querySelectorAll(".chip").forEach(btn => {
 });
 
 /* ----------------------------------------------------------------------------
- * Theme Mode Controller (Light = White default, Dark = Black/Obsidian)
+ * Theme Mode Controller (Emoji Only: ☀️ in Dark Mode, 🌙 in Light Mode)
+ * Default is Light (White) Mode
  * -------------------------------------------------------------------------- */
 const themeToggle = document.getElementById("theme-toggle");
 const themeIcon = document.getElementById("theme-icon");
-const themeLabel = document.getElementById("theme-label");
 
 function setTheme(theme) {
   if (theme === "dark") {
     document.documentElement.setAttribute("data-theme", "dark");
     if (themeIcon) themeIcon.textContent = "☀️";
-    if (themeLabel) themeLabel.textContent = "Light";
     localStorage.setItem("yatra_theme", "dark");
   } else {
     document.documentElement.removeAttribute("data-theme");
     if (themeIcon) themeIcon.textContent = "🌙";
-    if (themeLabel) themeLabel.textContent = "Dark";
     localStorage.setItem("yatra_theme", "light");
   }
 }
