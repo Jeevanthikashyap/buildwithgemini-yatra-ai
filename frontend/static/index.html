@@ -471,6 +471,82 @@
     border-color: var(--border);
   }
 
+  /* Formatted Markdown Content inside Bubble */
+  .formatted-chat-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+  }
+  .bubble-paragraph {
+    margin: 0;
+    line-height: 1.6;
+    color: var(--text-primary);
+  }
+  .bubble-header {
+    margin: 0.75rem 0 0.35rem 0;
+    color: var(--accent);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    line-height: 1.4;
+  }
+  .bubble-header:first-child {
+    margin-top: 0;
+  }
+  h3.bubble-header { font-size: 1.15rem; }
+  h4.bubble-header { font-size: 1.05rem; }
+  h5.bubble-header { font-size: 0.98rem; }
+  .bubble-list {
+    margin: 0.2rem 0 0.5rem 1.2rem;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+  .bubble-list-item {
+    line-height: 1.55;
+    color: var(--text-primary);
+  }
+  .bubble-numbered-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.55rem;
+    margin: 0.45rem 0;
+    line-height: 1.55;
+    font-weight: 500;
+  }
+  .item-num-badge {
+    background: rgba(37, 99, 235, 0.12);
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 0.82rem;
+    padding: 0.15rem 0.45rem;
+    border-radius: 6px;
+    flex-shrink: 0;
+  }
+  [data-theme="dark"] .item-num-badge {
+    background: rgba(124, 58, 237, 0.25);
+    color: #A78BFA;
+  }
+  .bubble-divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 0.65rem 0;
+    width: 100%;
+    opacity: 0.7;
+  }
+  .bubble-code {
+    background: rgba(37, 99, 235, 0.08);
+    color: var(--accent-dark);
+    padding: 0.15rem 0.35rem;
+    border-radius: 4px;
+    font-size: 0.88em;
+    font-family: monospace;
+  }
+  [data-theme="dark"] .bubble-code {
+    background: rgba(255, 255, 255, 0.1);
+    color: #93C5FD;
+  }
+
   /* Chips */
   .chips-container {
     display: flex;
@@ -780,45 +856,140 @@ function flattenText(messages) {
   return out.join("\n").trim();
 }
 
-// Convert markdown links [Label](url) and bare URLs to interactive links and stylish booking badges
-function formatTextWithLinks(container, text) {
-  // Regex to match [text](url) OR raw URLs
-  const linkRegex = /\[([^\]]+)\]\((https?:\/\/[^\s\)]+)\)|(https?:\/\/[^\s\)]+)/g;
-  let lastIndex = 0;
+// Convert markdown (headers, bold, lists, hr, booking badges) to formatted HTML
+function renderMarkdownContent(container, markdownText) {
+  if (!markdownText) return;
+
+  // 1. Process block elements line by line or paragraph
+  const lines = markdownText.split("\n");
+  let inList = false;
+  let listEl = null;
+
+  for (let i = 0; i < lines.length; i++) {
+    const rawLine = lines[i];
+    const trimmed = rawLine.trim();
+
+    // Horizontal rule
+    if (/^---+$|^\*\*\*+$/.test(trimmed)) {
+      if (inList) { inList = false; listEl = null; }
+      const hr = el("hr", "bubble-divider");
+      container.appendChild(hr);
+      continue;
+    }
+
+    // Headers: ### Header 3, ## Header 2, # Header 1
+    const hMatch = trimmed.match(/^(#{1,3})\s+(.*)$/);
+    if (hMatch) {
+      if (inList) { inList = false; listEl = null; }
+      const level = hMatch[1].length;
+      const hTag = level === 1 ? "h3" : (level === 2 ? "h4" : "h5");
+      const h = el(hTag, "bubble-header");
+      appendInlineFormattedText(h, hMatch[2]);
+      container.appendChild(h);
+      continue;
+    }
+
+    // Unordered list items: * Item or - Item
+    const liMatch = trimmed.match(/^[\*\-]\s+(.*)$/);
+    if (liMatch) {
+      if (!inList) {
+        inList = true;
+        listEl = el("ul", "bubble-list");
+        container.appendChild(listEl);
+      }
+      const li = el("li", "bubble-list-item");
+      appendInlineFormattedText(li, liMatch[1]);
+      listEl.appendChild(li);
+      continue;
+    }
+
+    // Numbered list items: 1. Item
+    const olMatch = trimmed.match(/^(\d+)\.\s+(.*)$/);
+    if (olMatch) {
+      if (inList) { inList = false; listEl = null; }
+      const p = el("div", "bubble-numbered-item");
+      const numSpan = el("span", "item-num-badge", olMatch[1] + ".");
+      p.appendChild(numSpan);
+      const textSpan = el("span", null);
+      appendInlineFormattedText(textSpan, olMatch[2]);
+      p.appendChild(textSpan);
+      container.appendChild(p);
+      continue;
+    }
+
+    // Regular line / paragraph
+    if (inList) { inList = false; listEl = null; }
+    if (trimmed.length > 0) {
+      const p = el("p", "bubble-paragraph");
+      appendInlineFormattedText(p, trimmed);
+      container.appendChild(p);
+    }
+  }
+}
+
+// Inline formatting: **bold**, `code`, [badge](url), bare URLs
+function appendInlineFormattedText(parent, text) {
+  // Regex tokenizes links, bold **...**, backticks `...`
+  const tokenRegex = /(\[([^\]]+)\]\((https?:\/\/[^\s\)]+)\))|(https?:\/\/[^\s\)]+)|(\*\*([^*]+)\*\*)|(`([^`]+)`)/g;
+  let lastIdx = 0;
   let match;
 
-  while ((match = linkRegex.exec(text)) !== null) {
-    if (match.index > lastIndex) {
-      container.appendChild(document.createTextNode(text.substring(lastIndex, match.index)));
+  while ((match = tokenRegex.exec(text)) !== null) {
+    if (match.index > lastIdx) {
+      parent.appendChild(document.createTextNode(text.substring(lastIdx, match.index)));
     }
-    
-    const label = match[1];
-    const url = match[2] || match[3];
-    const isBooking = /book|flight|irctc|ksrtc|hotel|makemytrip|singaporeair|emirates|airindia|goindigo|ana\.co/i.test(url) || /book/i.test(label || "");
 
-    const a = document.createElement("a");
-    a.href = url;
-    a.target = "_blank";
-    a.rel = "noopener noreferrer";
-    
-    if (isBooking) {
-      a.className = "booking-link-badge";
-      a.innerHTML = `<span>🎫</span> <span>${label || "Book Now"}</span> <span>↗</span>`;
-    } else {
-      a.textContent = label || url;
+    if (match[1]) {
+      // Markdown link [label](url)
+      const label = match[2];
+      const url = match[3];
+      const isBooking = /book|flight|irctc|ksrtc|hotel|makemytrip|singaporeair|emirates|airindia|goindigo|ana\.co/i.test(url) || /book/i.test(label || "");
+      const a = document.createElement("a");
+      a.href = url;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      if (isBooking) {
+        a.className = "booking-link-badge";
+        a.innerHTML = `<span>🎫</span> <span>${label || "Book Now"}</span> <span>↗</span>`;
+      } else {
+        a.textContent = label || url;
+      }
+      parent.appendChild(a);
+    } else if (match[4]) {
+      // Bare URL
+      const url = match[4];
+      const isBooking = /book|flight|irctc|ksrtc|hotel|makemytrip|singaporeair|emirates|airindia|goindigo/i.test(url);
+      const a = document.createElement("a");
+      a.href = url;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      if (isBooking) {
+        a.className = "booking-link-badge";
+        a.innerHTML = `<span>🎫</span> <span>Book Flight / Hotel</span> <span>↗</span>`;
+      } else {
+        a.textContent = url;
+      }
+      parent.appendChild(a);
+    } else if (match[5]) {
+      // Bold **text**
+      const strong = el("strong", null, match[6]);
+      parent.appendChild(strong);
+    } else if (match[7]) {
+      // Inline `code`
+      const code = el("code", "bubble-code", match[8]);
+      parent.appendChild(code);
     }
-    
-    container.appendChild(a);
-    lastIndex = linkRegex.lastIndex;
+
+    lastIdx = tokenRegex.lastIndex;
   }
 
-  if (lastIndex < text.length) {
-    container.appendChild(document.createTextNode(text.substring(lastIndex)));
+  if (lastIdx < text.length) {
+    parent.appendChild(document.createTextNode(text.substring(lastIdx)));
   }
 }
 
 function renderReply(b, parts) {
-  b.textContent = "";   // clear the "…" placeholder
+  b.textContent = "";   // clear placeholder
   const texts = parts.filter(p => p && (p.kind === "text" || (!p.kind && p.text))).map(p => p.text || "");
   let a2ui = parts.filter(p => p && p.kind === "a2ui" && p.data).map(p => p.data);
 
@@ -839,23 +1010,26 @@ function renderReply(b, parts) {
       console.warn("Failed to parse embedded a2ui json", e);
     }
   }
-  // Strip the raw tag blocks so users see only clean prose
+  // Strip raw tag blocks so users see only clean prose
   fullText = fullText.replace(a2uiTagRegex, "").trim();
 
+  // If prose is present, render it beautifully formatted
   if (fullText) {
-    const textDiv = el("div", null);
-    formatTextWithLinks(textDiv, fullText);
-    b.appendChild(textDiv);
+    const formattedDiv = el("div", "formatted-chat-content");
+    renderMarkdownContent(formattedDiv, fullText);
+    b.appendChild(formattedDiv);
   }
 
+  // If A2UI card exists, only render the visual card if it contains distinct components (e.g. Image or if fullText was empty)
   if (a2ui.length) {
-    b.classList.add("rich");
-    if (!renderSurface(a2ui, b)) {
-      const fallbackDiv = el("div", null);
-      formatTextWithLinks(fallbackDiv, flattenText(a2ui) || "");
-      if (fallbackDiv.childNodes.length) b.appendChild(fallbackDiv);
+    const cardContainer = el("div", "a2ui-card-wrapper");
+    const drew = renderSurface(a2ui, cardContainer);
+    if (drew && (!fullText || cardContainer.querySelector("img"))) {
+      b.classList.add("rich");
+      b.appendChild(cardContainer);
     }
   }
+
   if (!b.childNodes.length) b.textContent = "(no response)";
   log.scrollTop = log.scrollHeight;
 }
