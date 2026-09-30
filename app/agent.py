@@ -751,23 +751,24 @@ def book_travel_item(
     passenger_name: str = "Traveler",
     details: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """Book and confirm a flight, train, bus, or hotel reservation and save it to the user's Firestore itinerary.
+    """Book and confirm a domestic or international flight, train, bus, or hotel reservation and save it to the user's Firestore itinerary.
 
     Args:
-        item_type: 'flight', 'hotel', 'train', or 'activity'.
-        title: Title of booking (e.g. 'Singapore Airlines SQ509 BLR->SIN', 'Holiday Inn Clarke Quay').
+        item_type: 'flight' (domestic or international), 'train', 'bus', 'hotel', or 'activity'.
+        title: Title of booking (e.g. 'Singapore Airlines SQ509 BLR->SIN', 'IndiGo 6E 1005', 'KSRTC Airavat Club Class', 'Vande Bharat Express 20608', 'Holiday Inn Clarke Quay').
         origin: Departure point or check-in city.
         destination: Arrival city or hotel location.
         start_date: Travel date or check-in date (YYYY-MM-DD).
         end_date: Optional return or check-out date.
         total_cost_inr: Total confirmed cost in INR (₹).
         passenger_name: Primary passenger / guest name.
-        details: Seat numbers, room category, meal preference, or cancellation terms.
+        details: Seat numbers, coach/class, baggage allowance, meal preference, or cancellation terms.
 
     Returns:
         Confirmation details with booking PNR / reference code, status, and saved Firestore document ID.
     """
-    prefix = item_type[:3].upper()
+    prefix_map = {"flight": "FLI", "train": "TRN", "bus": "BUS", "hotel": "HTL", "activity": "ACT"}
+    prefix = prefix_map.get(item_type.lower(), item_type[:3].upper())
     pnr_code = f"{prefix}-{uuid.uuid4().hex[:6].upper()}"
 
     booking_record = {
@@ -1273,7 +1274,27 @@ You find domestic and international flights, search hotels and resorts matching 
 You have safe Python code execution capability in an isolated sandbox environment. When the user asks for exact budget calculations, currency conversions, duration arithmetic, or complex travel math, execute Python code to compute the exact figures.
 Use `search_flights` to find the cheapest international and domestic flights with airlines, stops, and price trends.
 Use `search_hotels` to discover hotels and resorts with user ratings, amenities, and dietary notes (vegetarian, Jain, halal).
-Use `book_travel_item` to instantly book and generate confirmed PNR/reservation codes for flights, hotels, or trains and persist them into the user's Firestore itinerary.
+Use `book_travel_item` to instantly book and generate confirmed PNR/reservation codes for flights (domestic and international), trains, buses, and hotels and persist them into the user's Firestore itinerary.
+AUTOMATED BOOKING CONFIRMATION & E-TICKETS:
+When the user asks you to book or reserve any flight, train, bus, or hotel:
+1. Always call `book_travel_item` to generate an official PNR/booking reference.
+2. In your confirmation response, announce the successful booking and always include a dedicated **CONFIRMED E-TICKET** block in this format:
+   ```
+   [CONFIRMED_BOOKING]
+   Type: <flight|train|bus|hotel>
+   PNR: <booking_reference>
+   Passenger: <passenger_name>
+   Title: <carrier & route or hotel name>
+   From: <origin>
+   To: <destination>
+   Date: <travel/check-in date>
+   Amount: <total_cost_inr>
+   Class: <class or coach or room type>
+   Seat: <seat or room number or meal note>
+   Status: CONFIRMED
+   [/CONFIRMED_BOOKING]
+   ```
+   This tag automatically activates the one-click PDF E-Ticket & Receipt generator in the user's interface, allowing them to download their official PDF receipt directly into their local storage!
 Use `create_price_drop_alert` to watch flights or trains and alert travelers when fares drop below their target price.
 Use `check_price_drop_alerts` to scan monitored routes and report newly detected discounts or price drops.
 Use `generate_destination_postcard` to create stunning travel postcards or visual mood boards.

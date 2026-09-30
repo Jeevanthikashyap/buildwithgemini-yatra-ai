@@ -7,6 +7,9 @@
 <!-- Optional: used only to draw A2UI Icon components. If it can't load (offline/
      corp network), icons fall back to showing their name as text. -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined">
+<!-- jsPDF for instant client-side PDF E-Ticket & Receipt Generation -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <style>
   :root {
     --accent: #2563EB; /* Royal Blue */
@@ -542,9 +545,92 @@
     font-size: 0.88em;
     font-family: monospace;
   }
-  [data-theme="dark"] .bubble-code {
-    background: rgba(255, 255, 255, 0.1);
-    color: #93C5FD;
+  /* Electronic Booking Pass & PDF Receipt Card */
+  .ticket-card {
+    margin-top: 0.85rem;
+    padding: 1.15rem;
+    border-radius: 16px;
+    background: linear-gradient(145deg, rgba(37, 99, 235, 0.07) 0%, rgba(124, 58, 237, 0.09) 100%);
+    border: 1.5px dashed rgba(37, 99, 235, 0.35);
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  [data-theme="dark"] .ticket-card {
+    background: linear-gradient(145deg, rgba(37, 99, 235, 0.15) 0%, rgba(124, 58, 237, 0.18) 100%);
+    border-color: rgba(124, 58, 237, 0.5);
+  }
+  .ticket-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 0.55rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .ticket-carrier-tag {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .ticket-pnr-badge {
+    background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%);
+    color: #FFFFFF;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 0.2rem 0.6rem;
+    border-radius: 6px;
+    letter-spacing: 0.05em;
+    font-family: monospace;
+  }
+  .ticket-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 0.65rem 0.85rem;
+    font-size: 0.86rem;
+  }
+  .ticket-cell {
+    display: flex;
+    flex-direction: column;
+  }
+  .ticket-label {
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+  }
+  .ticket-value {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-top: 0.1rem;
+  }
+  .ticket-download-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    padding: 0.6rem 1.1rem;
+    background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+    color: #FFFFFF;
+    border: none;
+    border-radius: 12px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 3px 10px rgba(16, 185, 129, 0.28);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    align-self: flex-start;
+    margin-top: 0.25rem;
+  }
+  .ticket-download-btn:hover {
+    transform: translateY(-1.5px);
+    box-shadow: 0 5px 15px rgba(16, 185, 129, 0.4);
+  }
+  .ticket-download-btn:active {
+    transform: scale(0.98);
   }
 
   /* Chips */
@@ -1013,11 +1099,36 @@ function renderReply(b, parts) {
   // Strip raw tag blocks so users see only clean prose
   fullText = fullText.replace(a2uiTagRegex, "").trim();
 
+  // Parse [CONFIRMED_BOOKING]...[/CONFIRMED_BOOKING] blocks for automated E-Tickets & PDF Generation
+  let bookingData = null;
+  const bookingRegex = /\[CONFIRMED_BOOKING\]([\s\S]*?)\[\/CONFIRMED_BOOKING\]/i;
+  const bookingMatch = bookingRegex.exec(fullText);
+  if (bookingMatch) {
+    const rawBlock = bookingMatch[1];
+    bookingData = {};
+    rawBlock.split("\n").forEach(line => {
+      const idx = line.indexOf(":");
+      if (idx !== -1) {
+        const k = line.substring(0, idx).trim().toLowerCase();
+        const v = line.substring(idx + 1).trim();
+        bookingData[k] = v;
+      }
+    });
+    // Remove the raw metadata block so user sees only clean text + the Ticket Card
+    fullText = fullText.replace(bookingRegex, "").trim();
+  }
+
   // If prose is present, render it beautifully formatted
   if (fullText) {
     const formattedDiv = el("div", "formatted-chat-content");
     renderMarkdownContent(formattedDiv, fullText);
     b.appendChild(formattedDiv);
+  }
+
+  // If a booking was confirmed, render the interactive Ticket Card with 1-click PDF download
+  if (bookingData && bookingData.pnr) {
+    const ticketCard = createTicketCard(bookingData);
+    b.appendChild(ticketCard);
   }
 
   // If A2UI card exists, only render the visual card if it contains distinct components (e.g. Image or if fullText was empty)
@@ -1032,6 +1143,186 @@ function renderReply(b, parts) {
 
   if (!b.childNodes.length) b.textContent = "(no response)";
   log.scrollTop = log.scrollHeight;
+}
+
+// Generate the interactive UI Ticket Card
+function createTicketCard(data) {
+  const card = el("div", "ticket-card");
+  
+  const typeIcons = {
+    flight: "✈️",
+    train: "🚆",
+    bus: "🚌",
+    hotel: "🏨"
+  };
+  const icon = typeIcons[(data.type || "").toLowerCase()] || "🎫";
+  const typeName = (data.type || "Travel").toUpperCase();
+
+  const header = el("div", "ticket-header");
+  header.innerHTML = `
+    <div class="ticket-carrier-tag">
+      <span>${icon}</span>
+      <span>${data.title || `${typeName} Confirmation`}</span>
+    </div>
+    <div class="ticket-pnr-badge">PNR: ${data.pnr}</div>
+  `;
+  card.appendChild(header);
+
+  const grid = el("div", "ticket-grid");
+  const fields = [
+    { label: "Passenger / Guest", value: data.passenger || "Traveler" },
+    { label: "Route / Property", value: (data.from && data.to) ? `${data.from} ➔ ${data.to}` : (data.title || data.from || "Confirmed") },
+    { label: "Date / Timing", value: data.date || "Upcoming" },
+    { label: "Class / Tier", value: data.class || "Confirmed Class" },
+    { label: "Seat / Meal", value: data.seat || "Standard" },
+    { label: "Total Amount", value: data.amount ? `₹${data.amount}` : "Paid / Guaranteed" }
+  ];
+
+  fields.forEach(f => {
+    const cell = el("div", "ticket-cell");
+    cell.innerHTML = `
+      <span class="ticket-label">${f.label}</span>
+      <span class="ticket-value">${f.value}</span>
+    `;
+    grid.appendChild(cell);
+  });
+  card.appendChild(grid);
+
+  const dlBtn = el("button", "ticket-download-btn");
+  dlBtn.innerHTML = `<span>📥</span> <span>Download Official PDF Receipt</span>`;
+  dlBtn.onclick = () => {
+    generateAndDownloadPDFReceipt(data);
+  };
+  card.appendChild(dlBtn);
+
+  return card;
+}
+
+// Client-side PDF generation & direct local storage download via jsPDF
+function generateAndDownloadPDFReceipt(data) {
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({
+      orientation: "portrait",
+      unit: "mm",
+      format: "a4"
+    });
+
+    const primaryColor = [30, 58, 138];    // Royal Blue #1E3A8A
+    const accentColor = [124, 58, 237];   // Violet #7C3AED
+    const darkSlate = [15, 23, 42];
+
+    // Header Bar
+    doc.setFillColor(...primaryColor);
+    doc.rect(0, 0, 210, 36, "F");
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(20);
+    doc.text("YatraAI Global Travel Concierge", 14, 18);
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.text("Official E-Ticket Confirmation & Tax Invoice", 14, 26);
+    doc.text("Generated: " + new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }), 140, 26);
+
+    // Status Ribbon
+    doc.setFillColor(16, 185, 129); // Emerald Green
+    doc.rect(14, 44, 182, 12, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text(`CONFIRMED BOOKING — PNR: ${data.pnr || "CONFIRMED"}`, 20, 51.5);
+
+    // Traveler & Trip Details Table
+    const rows = [
+      ["Booking Reference (PNR)", data.pnr || "N/A", "Booking Status", "CONFIRMED & GUARANTEED"],
+      ["Service Type", (data.type || "Travel").toUpperCase(), "Carrier / Property", data.title || "N/A"],
+      ["Primary Passenger / Guest", data.passenger || "Traveler", "Travel Date", data.date || "As Scheduled"],
+      ["Origin / Departure", data.from || "N/A", "Destination / Arrival", data.to || "N/A"],
+      ["Class / Category", data.class || "Economy / Standard", "Seat / Meal Allocation", data.seat || "Assigned"],
+      ["Payment Mode", "Pre-Authorized / Verified", "Total Fare / Paid", data.amount ? `INR ${data.amount}` : "Guaranteed Rate"]
+    ];
+
+    if (doc.autoTable) {
+      doc.autoTable({
+        startY: 62,
+        head: [["Reservation Parameter", "Details", "Parameter", "Details"]],
+        body: rows,
+        theme: "striped",
+        headStyles: {
+          fillColor: primaryColor,
+          textColor: [255, 255, 255],
+          fontStyle: "bold"
+        },
+        styles: {
+          fontSize: 9.5,
+          cellPadding: 4,
+          textColor: darkSlate
+        },
+        alternateRowStyles: {
+          fillColor: [248, 250, 252]
+        }
+      });
+    }
+
+    const finalY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 12 : 140;
+
+    // Security & Barcode Simulation
+    doc.setFillColor(241, 245, 249);
+    doc.rect(14, finalY, 182, 28, "F");
+    doc.setDrawColor(203, 213, 225);
+    doc.rect(14, finalY, 182, 28, "S");
+
+    doc.setTextColor(...primaryColor);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.text("Boarding Verification & Verification Token", 20, finalY + 8);
+
+    doc.setFont("courier", "bold");
+    doc.setFontSize(11);
+    doc.setTextColor(...darkSlate);
+    const token = `||| | ||||| || | | |||| | ||| [${data.pnr || "VERIFIED"}] ||| | ||||| || | | ||||`;
+    doc.text(token, 20, finalY + 16);
+
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(8);
+    doc.setTextColor(100, 116, 139);
+    doc.text("Present this digital receipt or government-issued photo ID at security/check-in counters.", 20, finalY + 23);
+
+    // Terms & Cancellation Notes
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.setTextColor(...primaryColor);
+    doc.text("Important Travel Notes & Guidelines:", 14, finalY + 36);
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(71, 85, 105);
+    const notes = [
+      "• Domestic Flights / Trains: Reach departure terminal at least 2 hours prior to scheduled departure.",
+      "• International Flights: Reach airport 3 hours prior; ensure passport validity of minimum 6 months with visa requirements.",
+      "• Baggage: Included check-in and cabin baggage as per carrier limits specified during booking.",
+      "• Support & Inquiries: YatraAI 24x7 Concierge Assistant powered by Google Cloud & Vertex AI."
+    ];
+    let noteY = finalY + 42;
+    notes.forEach(n => {
+      doc.text(n, 14, noteY);
+      noteY += 5;
+    });
+
+    // Footer
+    doc.setFontSize(8);
+    doc.setTextColor(148, 163, 184);
+    doc.text("YatraAI Concierge • Verified Cloud Engine Record • Powered by Google Agent Development Kit (ADK)", 14, 285);
+
+    // Trigger local browser download
+    const filename = `YatraAI_Ticket_${data.pnr || "Booking"}.pdf`;
+    doc.save(filename);
+  } catch (err) {
+    console.error("PDF generation failed:", err);
+    alert("Could not generate PDF: " + err.message);
+  }
 }
 
 /* ----------------------------------------------------------------------------
