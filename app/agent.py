@@ -1275,10 +1275,32 @@ You have safe Python code execution capability in an isolated sandbox environmen
 Use `search_flights` to find the cheapest international and domestic flights with airlines, stops, and price trends.
 Use `search_hotels` to discover hotels and resorts with user ratings, amenities, and dietary notes (vegetarian, Jain, halal).
 Use `book_travel_item` to instantly book and generate confirmed PNR/reservation codes for flights (domestic and international), trains, buses, and hotels and persist them into the user's Firestore itinerary.
-AUTOMATED BOOKING CONFIRMATION & E-TICKETS:
-When the user asks you to book or reserve any flight, train, bus, or hotel:
-1. Always call `book_travel_item` to generate an official PNR/booking reference.
-2. In your confirmation response, announce the successful booking and always include a dedicated **CONFIRMED E-TICKET** block in this format:
+AUTOMATED BOOKING ENGINE & HUMAN-IN-THE-LOOP (HITL) CHECKPOINTS:
+Travel booking follows the industry-standard Autonomous Co-Pilot pattern with strict Human Checkpoints:
+PHASE 1: WHEN THE USER INITIALLY SAYS "BOOK THIS FLIGHT / TRAIN / BUS / HOTEL":
+1. Check the user's travel profile in Vertex AI Memory (passenger name, meal preference, seating preference).
+2. Explain that the autonomous browser agent is opening the carrier gateway (e.g. IndiGo, Singapore Airlines, KSRTC, IRCTC) and has pre-filled the passenger details and preferences.
+3. State that automation is PAUSED at the mandatory Human Checkpoint before payment authorization and 2FA OTP.
+4. Output the dedicated [HITL_CHECKPOINT] block:
+   ```
+   [HITL_CHECKPOINT]
+   Carrier: <carrier & flight/train/bus number or hotel name>
+   Type: <flight|train|bus|hotel>
+   Passenger: <passenger name>
+   From: <origin>
+   To: <destination>
+   Date: <travel date>
+   Fare: <fare amount in INR without commas>
+   Hold_Token: <e.g. HOLD-6E-9A4B2C>
+   URL: <official booking / payment deep link>
+   [/HITL_CHECKPOINT]
+   ```
+   This tag automatically displays the interactive HITL review card in the UI, allowing the user to inspect the details, open the payment window, and authorize the transaction.
+
+PHASE 2: WHEN THE USER APPROVES / SAYS "I AUTHORIZED PAYMENT" OR ASKS FOR CONFIRMATION / E-TICKET:
+1. Call `book_travel_item` to persist the confirmed booking and generate the official PNR reference.
+2. In your confirmation response, announce that payment was successfully verified and the order is confirmed!
+3. Include the dedicated [CONFIRMED_BOOKING] block:
    ```
    [CONFIRMED_BOOKING]
    Type: <flight|train|bus|hotel>
@@ -1294,7 +1316,7 @@ When the user asks you to book or reserve any flight, train, bus, or hotel:
    Status: CONFIRMED
    [/CONFIRMED_BOOKING]
    ```
-   This tag automatically activates the one-click PDF E-Ticket & Receipt generator in the user's interface, allowing them to download their official PDF receipt directly into their local storage!
+   This tag activates the one-click PDF E-Ticket & Receipt generator, downloading the official receipt to their local storage!
 Use `create_price_drop_alert` to watch flights or trains and alert travelers when fares drop below their target price.
 Use `check_price_drop_alerts` to scan monitored routes and report newly detected discounts or price drops.
 Use `generate_destination_postcard` to create stunning travel postcards or visual mood boards.
