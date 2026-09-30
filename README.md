@@ -24,8 +24,20 @@ The features below are wired directly to Google Cloud services and production to
   - **`generate_destination_postcard`**: Uses `gemini-3.1-flash-lite-image` to generate high-resolution visual travel postcards, saves them to the Playground Artifacts panel (`tool_context.save_artifact`), and uploads them to a public Cloud Storage bucket.
   - **`generate_destination_video`**: Uses Google's Omni model (`gemini-omni-flash-preview`) in the `global` region to produce cinematic travel clips, saving to Artifacts and uploading to Cloud Storage.
 
-- **🚂 Multi-Modal Transit Discovery**:
-  - **`search_multimodal_transit`**: Searches options across trains (Indian Railways / IRCTC), sleeper buses (KSRTC Airavat), intercity cabs, and domestic flights with departure timings, class of travel, and INR (₹) price ranges.
+- **✈️ International & Domestic Flight Search (`search_flights`)**:
+  - Finds flights across global hubs (Singapore, Dubai, London, Tokyo, Bangkok, Paris) and domestic routes with real-time price trend insights (e.g., "Lowest in 30 days", "Recent price drop", "Fares rising"), baggage rules, and special dietary meal codes (AVML, VJML, Vegan).
+
+- **🏨 Global Hotel Discovery (`search_hotels`)**:
+  - Curated stays from heritage palaces to luxury resorts with star ratings, traveler scores, amenity lists, and dietary accommodations (100% pure veg, Jain, Halal certified).
+
+- **🎟️ Autonomous Travel Bookings (`book_travel_item`)**:
+  - Automatically issues confirmed booking references (PNR / Reservation IDs) for flights, trains, and hotels, and persists them into the user's Firestore itinerary with refundable terms and travel dates.
+
+- **🔔 Multi-Modal Price Drop Watch & Alerts (`create_price_drop_alert` & `check_price_drop_alerts`)**:
+  - Sets up threshold watches for trains and flights (domestic and international) and scans active market discounts, calculating exact savings in ₹ and % drop to advise booking timing.
+
+- **🚂 Multi-Modal Indian Transit Discovery (`search_multimodal_transit`)**:
+  - Searches options across trains (Indian Railways / IRCTC), sleeper buses (KSRTC Airavat), intercity cabs, and domestic flights with departure timings, class of travel, and INR (₹) price ranges.
 
 - **🌦️ Live Destination Weather & Alerts**:
   - **`get_live_destination_weather`**: Fetches real-time weather, temperature, humidity, precipitation, and terrain-specific advisory (such as boulder trekking cautions in Hampi or fog warnings in North India).

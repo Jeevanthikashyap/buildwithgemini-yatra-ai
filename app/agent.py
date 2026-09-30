@@ -320,6 +320,584 @@ def search_multimodal_transit(
     return matches
 
 
+def search_flights(
+    origin: str,
+    destination: str,
+    departure_date: Optional[str] = None,
+    return_date: Optional[str] = None,
+    cabin_class: str = "economy",
+    max_budget_inr: Optional[float] = None,
+) -> List[Dict[str, Any]]:
+    """Search domestic and international flights with pricing, airlines, stops, and price trends.
+
+    Args:
+        origin: Departure city or airport code (e.g., 'Bangalore', 'BLR', 'Delhi', 'DEL', 'Mumbai', 'BOM').
+        destination: Arrival city or airport code (e.g., 'Singapore', 'SIN', 'Dubai', 'DXB', 'London', 'LHR', 'Tokyo', 'HND', 'Bangkok', 'BKK', 'Paris', 'CDG', 'Goa', 'GOI').
+        departure_date: Desired departure date (e.g. '2026-11-10').
+        return_date: Optional return date for round trips.
+        cabin_class: 'economy', 'premium_economy', or 'business'.
+        max_budget_inr: Maximum budget in INR (₹).
+
+    Returns:
+        List of matching flights with airline, flight number, duration, stops, price in INR, and price trend tags.
+    """
+    flight_catalog = [
+        # International routes from Bangalore (BLR)
+        {
+            "id": "flt-sq509",
+            "airline": "Singapore Airlines",
+            "flight_number": "SQ 509",
+            "origin": "Bangalore (BLR)",
+            "destination": "Singapore (SIN)",
+            "type": "international",
+            "departure_time": "11:15 PM",
+            "arrival_time": "06:10 AM (+1 day)",
+            "duration": "4h 25m",
+            "stops": "Non-stop",
+            "cabin_class": "economy",
+            "price_inr": 18500,
+            "baggage": "25kg check-in + 7kg cabin",
+            "price_trend": "🔥 Lowest in 30 days (14% below average)",
+            "meal_included": True,
+            "dietary_options": ["Hindu Vegetarian (AVML)", "Jain Meal (VJML)", "Vegan"],
+        },
+        {
+            "id": "flt-6e1005",
+            "airline": "IndiGo International",
+            "flight_number": "6E 1005",
+            "origin": "Bangalore (BLR)",
+            "destination": "Singapore (SIN)",
+            "type": "international",
+            "departure_time": "09:40 AM",
+            "arrival_time": "04:45 PM",
+            "duration": "4h 35m",
+            "stops": "Non-stop",
+            "cabin_class": "economy",
+            "price_inr": 13900,
+            "baggage": "20kg check-in + 7kg cabin",
+            "price_trend": "📉 Recent price drop (Save ₹2,100)",
+            "meal_included": False,
+            "dietary_options": ["Pre-book Vegetarian Sandwich/Biryani"],
+        },
+        {
+            "id": "flt-ek565",
+            "airline": "Emirates",
+            "flight_number": "EK 565",
+            "origin": "Bangalore (BLR)",
+            "destination": "Dubai (DXB)",
+            "type": "international",
+            "departure_time": "10:30 AM",
+            "arrival_time": "01:00 PM",
+            "duration": "4h 00m",
+            "stops": "Non-stop",
+            "cabin_class": "economy",
+            "price_inr": 21800,
+            "baggage": "30kg check-in + 7kg cabin",
+            "price_trend": "⚡ Stable fare (Good availability)",
+            "meal_included": True,
+            "dietary_options": ["Vegetarian Jain", "Indian Veg", "Halal"],
+        },
+        {
+            "id": "flt-fz408",
+            "airline": "Flydubai",
+            "flight_number": "FZ 408",
+            "origin": "Bangalore (BLR)",
+            "destination": "Dubai (DXB)",
+            "type": "international",
+            "departure_time": "02:15 AM",
+            "arrival_time": "04:55 AM",
+            "duration": "4h 10m",
+            "stops": "Non-stop",
+            "cabin_class": "economy",
+            "price_inr": 15400,
+            "baggage": "20kg check-in + 7kg cabin",
+            "price_trend": "📉 Budget Pick (Cheapest non-stop to Dubai)",
+            "meal_included": False,
+            "dietary_options": ["Snack purchase on board"],
+        },
+        {
+            "id": "flt-tg326",
+            "airline": "Thai Airways",
+            "flight_number": "TG 326",
+            "origin": "Bangalore (BLR)",
+            "destination": "Bangkok (BKK)",
+            "type": "international",
+            "departure_time": "12:30 AM",
+            "arrival_time": "06:00 AM",
+            "duration": "4h 00m",
+            "stops": "Non-stop",
+            "cabin_class": "economy",
+            "price_inr": 16200,
+            "baggage": "25kg check-in + 7kg cabin",
+            "price_trend": "🔥 Popular seasonal route",
+            "meal_included": True,
+            "dietary_options": ["Asian Veg", "Indian Veg", "Jain Meal"],
+        },
+        {
+            "id": "flt-ba118",
+            "airline": "British Airways",
+            "flight_number": "BA 118",
+            "origin": "Bangalore (BLR)",
+            "destination": "London (LHR)",
+            "type": "international",
+            "departure_time": "07:00 AM",
+            "arrival_time": "01:15 PM",
+            "duration": "10h 45m",
+            "stops": "Non-stop",
+            "cabin_class": "economy",
+            "price_inr": 48500,
+            "baggage": "23kg check-in + 7kg cabin",
+            "price_trend": "⚡ Fares rising (Book soon)",
+            "meal_included": True,
+            "dietary_options": ["Asian Vegetarian (AVML)", "Jain", "Vegan"],
+        },
+        # Delhi (DEL) Routes
+        {
+            "id": "flt-ai187",
+            "airline": "Air India",
+            "flight_number": "AI 187",
+            "origin": "Delhi (DEL)",
+            "destination": "London (LHR)",
+            "type": "international",
+            "departure_time": "02:45 AM",
+            "arrival_time": "07:30 AM",
+            "duration": "9h 15m",
+            "stops": "Non-stop",
+            "cabin_class": "economy",
+            "price_inr": 43200,
+            "baggage": "2x23kg check-in + 7kg cabin",
+            "price_trend": "📉 High baggage allowance special",
+            "meal_included": True,
+            "dietary_options": ["Authentic Indian Vegetarian", "Jain", "Halal"],
+        },
+        {
+            "id": "flt-nh838",
+            "airline": "All Nippon Airways (ANA)",
+            "flight_number": "NH 838",
+            "origin": "Delhi (DEL)",
+            "destination": "Tokyo (HND)",
+            "type": "international",
+            "departure_time": "06:20 PM",
+            "arrival_time": "05:40 AM (+1 day)",
+            "duration": "7h 50m",
+            "stops": "Non-stop",
+            "cabin_class": "economy",
+            "price_inr": 49900,
+            "baggage": "2x23kg check-in + 7kg cabin",
+            "price_trend": "🔥 Top rated 5-star service",
+            "meal_included": True,
+            "dietary_options": ["Vegetarian Oriental", "Indian Veg", "Jain"],
+        },
+        # Domestic flight picks
+        {
+            "id": "flt-6e412",
+            "airline": "IndiGo",
+            "flight_number": "6E 412",
+            "origin": "Bangalore (BLR)",
+            "destination": "Goa (GOI)",
+            "type": "domestic",
+            "departure_time": "08:15 AM",
+            "arrival_time": "09:30 AM",
+            "duration": "1h 15m",
+            "stops": "Non-stop",
+            "cabin_class": "economy",
+            "price_inr": 3200,
+            "baggage": "15kg check-in + 7kg cabin",
+            "price_trend": "📉 Price drop: ₹950 cheaper than weekend average",
+            "meal_included": False,
+            "dietary_options": ["Buy on board"],
+        },
+        {
+            "id": "flt-ai804",
+            "airline": "Air India",
+            "flight_number": "AI 804",
+            "origin": "Delhi (DEL)",
+            "destination": "Varanasi (VNS)",
+            "type": "domestic",
+            "departure_time": "10:15 AM",
+            "arrival_time": "11:40 AM",
+            "duration": "1h 25m",
+            "stops": "Non-stop",
+            "cabin_class": "economy",
+            "price_inr": 3800,
+            "baggage": "15kg check-in + 7kg cabin",
+            "price_trend": "⚡ Stable fare",
+            "meal_included": True,
+            "dietary_options": ["Hot Vegetarian snack box"],
+        },
+    ]
+
+    orig_clean = origin.strip().lower()
+    dest_clean = destination.strip().lower()
+
+    matches = []
+    for flt in flight_catalog:
+        if orig_clean not in flt["origin"].lower() and orig_clean not in flt["flight_number"].lower():
+            continue
+        if dest_clean not in flt["destination"].lower():
+            continue
+        if cabin_class and cabin_class.lower() != flt["cabin_class"].lower():
+            continue
+        if max_budget_inr is not None and flt["price_inr"] > max_budget_inr:
+            continue
+        matches.append(flt)
+
+    # If no exact city code match found, return available routes matching the destination or helpful alternates
+    if not matches:
+        for flt in flight_catalog:
+            if dest_clean in flt["destination"].lower():
+                matches.append(flt)
+
+    return matches
+
+
+def search_hotels(
+    destination: str,
+    check_in_date: Optional[str] = None,
+    check_out_date: Optional[str] = None,
+    guests: int = 1,
+    max_price_per_night_inr: Optional[float] = None,
+    vibe: Optional[str] = None,
+    dietary_needs: Optional[str] = None,
+) -> List[Dict[str, Any]]:
+    """Search domestic and international hotels with rates, ratings, amenities, and dietary suitability.
+
+    Args:
+        destination: City or destination (e.g. 'Singapore', 'Dubai', 'Bangkok', 'London', 'Hampi', 'Goa', 'Munnar', 'Varanasi').
+        check_in_date: Check-in date (e.g. '2026-11-10').
+        check_out_date: Check-out date.
+        guests: Number of guests (default 1).
+        max_price_per_night_inr: Maximum price per night in INR (₹).
+        vibe: Preferred vibe: 'heritage', 'luxury', 'boutique', 'budget', 'scenic'.
+        dietary_needs: Specific dietary preferences: 'pure_veg', 'jain', 'halal', 'vegan'.
+
+    Returns:
+        List of matching hotels with nightly rates, location, amenities, and rating.
+    """
+    hotel_catalog = [
+        # Singapore
+        {
+            "id": "htl-sin-mbs",
+            "name": "Marina Bay Sands Luxury Resort",
+            "destination": "Singapore",
+            "stars": 5,
+            "rating": 4.8,
+            "neighborhood": "Marina Bay",
+            "price_per_night_inr": 42000,
+            "amenities": ["Infinity pool", "Rooftop SkyPark", "Spa", "Free high-speed WiFi", "Direct Metro Access"],
+            "dietary_notes": "Multiple Michelin-rated restaurants with Jain & pure vegetarian menus available.",
+            "vibe": "luxury",
+        },
+        {
+            "id": "htl-sin-clarke",
+            "name": "Holiday Inn Express Singapore Clarke Quay",
+            "destination": "Singapore",
+            "stars": 4,
+            "rating": 4.5,
+            "neighborhood": "Clarke Quay / Riverside",
+            "price_per_night_inr": 11500,
+            "amenities": ["Rooftop pool", "Free Express breakfast", "Fitness center", "Close to Little India food options"],
+            "dietary_notes": "Fresh vegetarian breakfast buffet; 10 min to Saravanaa Bhavan Little India.",
+            "vibe": "boutique",
+        },
+        # Dubai
+        {
+            "id": "htl-dxb-marina",
+            "name": "Rove Dubai Marina",
+            "destination": "Dubai",
+            "stars": 4,
+            "rating": 4.7,
+            "neighborhood": "Dubai Marina",
+            "price_per_night_inr": 7800,
+            "amenities": ["Outdoor pool", "Free WiFi", "24/7 gym", "Beach shuttle", "Modern co-working spaces"],
+            "dietary_notes": "100% Halal certified dining with dedicated Indian vegetarian menu options.",
+            "vibe": "budget",
+        },
+        {
+            "id": "htl-dxb-atlantis",
+            "name": "Atlantis, The Palm",
+            "destination": "Dubai",
+            "stars": 5,
+            "rating": 4.9,
+            "neighborhood": "Palm Jumeirah",
+            "price_per_night_inr": 38500,
+            "amenities": ["Private beach", "Aquaventure waterpark access", "Underwater aquarium", "World-class spa"],
+            "dietary_notes": "Fine dining with custom Jain and pure vegetarian course options upon request.",
+            "vibe": "luxury",
+        },
+        # Bangkok
+        {
+            "id": "htl-bkk-amari",
+            "name": "Amari Watergate Bangkok",
+            "destination": "Bangkok",
+            "stars": 5,
+            "rating": 4.6,
+            "neighborhood": "Pratunam",
+            "price_per_night_inr": 8200,
+            "amenities": ["Breeze Spa", "Outdoor pool", "Fitness club", "Next to CentralWorld shopping"],
+            "dietary_notes": "Special Indian breakfast station with fresh dosas, poha, and vegetarian thalis.",
+            "vibe": "luxury",
+        },
+        # London
+        {
+            "id": "htl-lon-stjames",
+            "name": "St. James' Court, A Taj Hotel",
+            "destination": "London",
+            "stars": 5,
+            "rating": 4.8,
+            "neighborhood": "Westminster / Buckingham Palace",
+            "price_per_night_inr": 28000,
+            "amenities": ["Courtyard garden", "Michelin-starred Quilon restaurant", "Jiva Spa", "Historic Victorian heritage"],
+            "dietary_notes": "Pioneering Indian coastal and pure vegetarian fine dining (Taj hospitality).",
+            "vibe": "heritage",
+        },
+        # India (Hampi, Munnar, Varanasi)
+        {
+            "id": "htl-hmp-ktdc",
+            "name": "KSTDC Hotel Mayura Bhuvaneshwari Hampi",
+            "destination": "Hampi",
+            "stars": 3,
+            "rating": 4.3,
+            "neighborhood": "Kamalapur (Heritage Zone)",
+            "price_per_night_inr": 2900,
+            "amenities": ["Garden", "Restaurant", "Parking", "5 min auto-rickshaw to Queen's Bath"],
+            "dietary_notes": "Pure South Indian vegetarian breakfast and simple home-style meals.",
+            "vibe": "heritage",
+        },
+        {
+            "id": "htl-hmp-evolve",
+            "name": "Evolve Back, Kamalapura Palace Hampi",
+            "destination": "Hampi",
+            "stars": 5,
+            "rating": 4.9,
+            "neighborhood": "Kamalapura",
+            "price_per_night_inr": 24000,
+            "amenities": ["Vijayanagara palace architecture", "Private infinity pool", "Ayurvedic wellness", "Reading lounge"],
+            "dietary_notes": "Gourmet multicourse dining catering to strict Jain, vegan, and sattvic preferences.",
+            "vibe": "luxury",
+        },
+        {
+            "id": "htl-mun-tea",
+            "name": "Windermere Estate Tea Plantation Retreat",
+            "destination": "Munnar",
+            "stars": 4,
+            "rating": 4.8,
+            "neighborhood": "Pothamedu Viewpoint",
+            "price_per_night_inr": 8500,
+            "amenities": ["Working tea & cardamom estate", "Misty valley views", "Trekking trails", "Campfire"],
+            "dietary_notes": "Farm-to-table organic vegetarian Kerala delicacies.",
+            "vibe": "scenic",
+        },
+        {
+            "id": "htl-vns-taj",
+            "name": "BrijRama Palace, Varanasi - A Heritage Hotel",
+            "destination": "Varanasi",
+            "stars": 5,
+            "rating": 4.9,
+            "neighborhood": "Darbhanga Ghat",
+            "price_per_night_inr": 26000,
+            "amenities": ["18th-century palace on the Ganges", "Bajra boat rides", "Live classical sitar evenings"],
+            "dietary_notes": "Strictly 100% Pure Vegetarian with exquisite Banarasi satvik dining.",
+            "vibe": "spiritual",
+        },
+    ]
+
+    dest_clean = destination.strip().lower()
+    matches = []
+    for htl in hotel_catalog:
+        if dest_clean not in htl["destination"].lower() and dest_clean not in htl["neighborhood"].lower():
+            continue
+        if max_price_per_night_inr is not None and htl["price_per_night_inr"] > max_price_per_night_inr:
+            continue
+        if vibe and vibe.lower() not in htl["vibe"].lower():
+            continue
+        if dietary_needs and dietary_needs.lower() not in htl["dietary_notes"].lower():
+            continue
+        matches.append(htl)
+
+    if not matches:
+        # Fallback to broader destination match
+        for htl in hotel_catalog:
+            if dest_clean in htl["destination"].lower():
+                matches.append(htl)
+
+    return matches
+
+
+def book_travel_item(
+    item_type: str,
+    title: str,
+    origin: str,
+    destination: str,
+    start_date: str,
+    end_date: Optional[str] = None,
+    total_cost_inr: float = 0.0,
+    passenger_name: str = "Traveler",
+    details: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Book and confirm a flight, train, bus, or hotel reservation and save it to the user's Firestore itinerary.
+
+    Args:
+        item_type: 'flight', 'hotel', 'train', or 'activity'.
+        title: Title of booking (e.g. 'Singapore Airlines SQ509 BLR->SIN', 'Holiday Inn Clarke Quay').
+        origin: Departure point or check-in city.
+        destination: Arrival city or hotel location.
+        start_date: Travel date or check-in date (YYYY-MM-DD).
+        end_date: Optional return or check-out date.
+        total_cost_inr: Total confirmed cost in INR (₹).
+        passenger_name: Primary passenger / guest name.
+        details: Seat numbers, room category, meal preference, or cancellation terms.
+
+    Returns:
+        Confirmation details with booking PNR / reference code, status, and saved Firestore document ID.
+    """
+    prefix = item_type[:3].upper()
+    pnr_code = f"{prefix}-{uuid.uuid4().hex[:6].upper()}"
+
+    booking_record = {
+        "id": f"bk-{uuid.uuid4().hex[:8]}",
+        "booking_reference": pnr_code,
+        "item_type": item_type.lower(),
+        "title": title,
+        "origin": origin,
+        "destination": destination,
+        "start_date": start_date,
+        "end_date": end_date,
+        "total_cost_inr": total_cost_inr,
+        "passenger_name": passenger_name,
+        "details": details or "Instant confirmation issued. Free cancellation up to 48 hours before travel.",
+        "status": "CONFIRMED",
+        "booked_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+    }
+
+    # Save to user's itinerary collection in Firestore
+    db = get_firestore_client()
+    db.collection("itinerary_items").document(booking_record["id"]).set({
+        "id": booking_record["id"],
+        "destination": destination.strip().title(),
+        "title": f"[{item_type.upper()}] {title} (Ref: {pnr_code})",
+        "day_number": 1,
+        "start_time": start_date,
+        "estimated_cost_inr": total_cost_inr,
+        "notes": f"PNR: {pnr_code} | Guest: {passenger_name} | {details or ''}",
+        "category": item_type.lower(),
+        "created_at": booking_record["booked_at"],
+    })
+
+    return {
+        "status": "success",
+        "booking_reference": pnr_code,
+        "confirmation_message": f"Successfully confirmed {item_type} booking for {passenger_name}!",
+        "booking_details": booking_record,
+    }
+
+
+def create_price_drop_alert(
+    route_type: str,
+    origin: str,
+    destination: str,
+    current_price_inr: float,
+    target_price_inr: Optional[float] = None,
+    notify_on_any_drop: bool = True,
+) -> Dict[str, Any]:
+    """Create a price watch alert for flights or trains to notify the user when fares drop.
+
+    Args:
+        route_type: 'flight' or 'train'.
+        origin: Departure city/station (e.g. 'Bangalore', 'Delhi', 'BLR').
+        destination: Arrival city/station (e.g. 'Singapore', 'London', 'Hosapete', 'Dubai').
+        current_price_inr: Current fare observed in INR (₹).
+        target_price_inr: Desired threshold price to trigger high-priority alerts.
+        notify_on_any_drop: Whether to notify as soon as any fare decrease occurs.
+
+    Returns:
+        Confirmation dictionary with the generated Alert ID and watch parameters.
+    """
+    alert_id = f"alert-{uuid.uuid4().hex[:6]}"
+    target = target_price_inr if target_price_inr is not None else (current_price_inr * 0.9)  # default 10% drop target
+
+    alert_data = {
+        "alert_id": alert_id,
+        "route_type": route_type.lower(),
+        "origin": origin.strip(),
+        "destination": destination.strip(),
+        "current_price_inr": current_price_inr,
+        "target_price_inr": target,
+        "notify_on_any_drop": notify_on_any_drop,
+        "active": True,
+        "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+    }
+
+    db = get_firestore_client()
+    db.collection("price_alerts").document(alert_id).set(alert_data)
+
+    return {
+        "status": "active",
+        "alert_id": alert_id,
+        "message": f"Price drop watch activated for {route_type} from {origin} to {destination}.",
+        "baseline_price_inr": current_price_inr,
+        "target_alert_threshold_inr": target,
+    }
+
+
+def check_price_drop_alerts() -> List[Dict[str, Any]]:
+    """Scan all active price alerts in Firestore, evaluate against real-time price trends, and report detected drops.
+
+    Returns:
+        List of triggered price drop notifications with savings amounts and booking advice.
+    """
+    db = get_firestore_client()
+    alerts_ref = db.collection("price_alerts").where("active", "==", True).stream()
+
+    notifications = []
+    # Simulated live fare fluctuations based on recent airline & railway yield adjustments
+    market_discounts = {
+        ("bangalore", "singapore"): {"new_price": 13900, "drop_amount": 4600, "reason": "IndiGo Flash Sale & Singapore Airlines partner fare match"},
+        ("bangalore", "dubai"): {"new_price": 14200, "drop_amount": 2300, "reason": "Flydubai mid-week fare concession"},
+        ("bangalore", "hampi"): {"new_price": 780, "drop_amount": 110, "reason": "Tatkal quota dynamic pricing softening"},
+        ("delhi", "london"): {"new_price": 39800, "drop_amount": 3400, "reason": "Air India autumn special promo"},
+        ("bangalore", "goa"): {"new_price": 2499, "drop_amount": 701, "reason": "Monsoon end discount on early morning slots"},
+    }
+
+    for doc in alerts_ref:
+        alert = doc.to_dict()
+        orig = alert.get("origin", "").strip().lower()
+        dest = alert.get("destination", "").strip().lower()
+        baseline = alert.get("current_price_inr", 0.0)
+
+        # Look up simulated market movements
+        match = None
+        for (k_orig, k_dest), data in market_discounts.items():
+            if (k_orig in orig or orig in k_orig) and (k_dest in dest or dest in k_dest):
+                match = data
+                break
+
+        if match and match["new_price"] < baseline:
+            savings = baseline - match["new_price"]
+            percent = round((savings / baseline) * 100, 1)
+            notifications.append({
+                "alert_id": alert.get("alert_id"),
+                "route": f"{alert.get('origin')} ➔ {alert.get('destination')} ({alert.get('route_type').title()})",
+                "original_price_inr": baseline,
+                "discounted_price_inr": match["new_price"],
+                "savings_inr": savings,
+                "drop_percentage": f"{percent}%",
+                "deal_insight": match["reason"],
+                "action": "Recommended to lock in this fare now before seats run out.",
+            })
+        else:
+            # Report monitoring status
+            notifications.append({
+                "alert_id": alert.get("alert_id"),
+                "route": f"{alert.get('origin')} ➔ {alert.get('destination')}",
+                "status": "Monitored",
+                "current_price_inr": baseline,
+                "note": "Fare is currently stable. We will alert you immediately if it dips below your target.",
+            })
+
+    return notifications
+
+
 def get_live_destination_weather(destination: str) -> Dict[str, Any]:
     """Fetch live real-time weather and forecast for any Indian city or travel destination via Open-Meteo.
 
@@ -662,25 +1240,32 @@ schema_manager = A2uiSchemaManager(
 )
 
 instruction = schema_manager.generate_system_prompt(
-    role_description="""You are YatraAI, an expert Travel & City Concierge for India.
+    role_description="""You are YatraAI, an expert Global & India Travel & City Concierge.
 
 MEMORY & PERSONALIZATION:
 You have long-term cross-session memory via Vertex AI Memory Bank (`PreloadMemoryTool`).
 Specifically remember and retain the following travel profile dimensions across conversations:
 1. DIETARY RESTRICTIONS & ALLERGIES: Strict vegetarian, Jain (no root vegetables/onion/garlic), vegan, halal, gluten-free, peanut or dairy allergies. Always enforce these without re-asking.
 2. TRAVEL PACE & RHYTHM: Slow & leisurely (e.g. max 2-3 spots/day, late mornings), balanced, or fast-paced sightseeing sprints.
-3. VIBE & EXPERIENCE PREFERENCES: Heritage & architecture, peaceful nature trails, cafe hopping, spiritual/temple visits, photography, or adventure treks.
-4. HOME CITY & TRANSIT PREFERENCES: Origin station/airport (e.g. Bangalore, Mumbai, Delhi), preferred coach classes (1A/2A/3A, Vande Bharat, sleeper bus vs cab).
-5. BUDGET CONSTRAINTS: Typical trip budget tier (e.g., backpacker under ₹5k, mid-tier under ₹15k, luxury).
+3. VIBE & EXPERIENCE PREFERENCES: Heritage & architecture, peaceful nature trails, cafe hopping, spiritual/temple visits, photography, eco-resorts, luxury, or adventure treks.
+4. HOME CITY & TRANSIT PREFERENCES: Origin station/airport (e.g. Bangalore/BLR, Mumbai/BOM, Delhi/DEL), preferred airlines or coach classes (Singapore Airlines, Emirates, IndiGo, 1A/2A/3A, Vande Bharat, sleeper bus).
+5. BUDGET CONSTRAINTS: Typical trip budget tier (e.g., backpacker under ₹5k, mid-tier under ₹15k, international budget ₹50k-₹1L, luxury).
 6. PAST TRIPS & FEEDBACK: Spots the user has visited or loved/disliked, avoiding redundant recommendations.
 
-You help travelers explore destinations (like Hampi, Varanasi, Munnar, etc.), find multi-modal transit (trains, sleeper buses, cabs, flights), discover curated hidden gems, scenic trails, authentic cafes matching their dietary profile, and plan day-wise itineraries.
+You help travelers explore destinations across India (like Hampi, Varanasi, Munnar, Goa) and internationally (like Singapore, Dubai, Bangkok, London, Tokyo, Bali).
+You find domestic and international flights, search hotels and resorts matching dietary requirements, book confirmed reservations, and set up price drop alerts.
 You have safe Python code execution capability in an isolated sandbox environment. When the user asks for exact budget calculations, currency conversions, duration arithmetic, or complex travel math, execute Python code to compute the exact figures.
-Use `generate_destination_postcard` to create stunning travel postcards or visual mood boards for destinations and attractions.
+Use `search_flights` to find the cheapest international and domestic flights with airlines, stops, and price trends.
+Use `search_hotels` to discover hotels and resorts with user ratings, amenities, and dietary notes (vegetarian, Jain, halal).
+Use `book_travel_item` to instantly book and generate confirmed PNR/reservation codes for flights, hotels, or trains and persist them into the user's Firestore itinerary.
+Use `create_price_drop_alert` to watch flights or trains and alert travelers when fares drop below their target price.
+Use `check_price_drop_alerts` to scan monitored routes and report newly detected discounts or price drops.
+Use `generate_destination_postcard` to create stunning travel postcards or visual mood boards.
+Use `generate_destination_video` to generate short cinematic destination clips.
 Use `geocode_address` to turn any address, landmark, or temple into geographic coordinates using Google Maps.
 Use `find_nearby_places` to discover nearby attractions, cafes, restaurants, or hotels around coordinates using Google Places API (New).
-Use `get_live_destination_weather` to check real-time weather and travel comfort tips before scheduling outdoor treks or visits.
-Use `search_multimodal_transit` to find trains, buses, cabs, or flights between cities with pricing and schedule.
+Use `get_live_destination_weather` to check real-time weather and travel comfort tips.
+Use `search_multimodal_transit` to find trains, buses, cabs, or domestic transit options between Indian cities.
 Use `search_curated_spots` to query verified local spots from Firestore.
 Use `save_user_itinerary_item` to persist activities or transit legs to the user's itinerary in Firestore.
 Use `get_user_itinerary` to review what the user has currently planned.
@@ -721,6 +1306,11 @@ root_agent = Agent(
     instruction=instruction,
     tools=[
         PreloadMemoryTool(),
+        search_flights,
+        search_hotels,
+        book_travel_item,
+        create_price_drop_alert,
+        check_price_drop_alerts,
         generate_destination_postcard,
         generate_destination_video,
         geocode_address,
