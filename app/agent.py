@@ -227,6 +227,7 @@ def search_multimodal_transit(
             "price_inr": 890,
             "availability": "Available (32 seats)",
             "notes": "Overnight train directly to Hosapete junction; 25 min auto-rickshaw to Hampi ruins.",
+            "booking_url": "https://www.irctc.co.in/nget/train-search",
         },
         {
             "id": "bus-ksrtc-airavat",
@@ -241,6 +242,7 @@ def search_multimodal_transit(
             "price_inr": 1150,
             "availability": "Available (14 berths)",
             "notes": "Direct drop at Hampi Bazaar near Virupaksha temple.",
+            "booking_url": "https://ksrtc.in/oprs-web/",
         },
         {
             "id": "cab-intercity-hampi",
@@ -255,6 +257,7 @@ def search_multimodal_transit(
             "price_inr": 6200,
             "availability": "Instant Confirmation",
             "notes": "Door-to-door scenic drive via NH48 & NH50 with toll inclusion.",
+            "booking_url": "https://www.makemytrip.com/cabs/",
         },
         # Delhi -> Varanasi
         {
@@ -270,6 +273,7 @@ def search_multimodal_transit(
             "price_inr": 1750,
             "availability": "Available (48 seats)",
             "notes": "Fastest daytime express with morning tea, breakfast, and lunch included.",
+            "booking_url": "https://www.irctc.co.in/nget/train-search",
         },
         {
             "id": "flt-6e-2142",
@@ -284,6 +288,7 @@ def search_multimodal_transit(
             "price_inr": 3850,
             "availability": "Available",
             "notes": "Quick non-stop flight to Lal Bahadur Shastri Airport; 45m prepaid taxi to Ghats.",
+            "booking_url": "https://www.goindigo.in/flight-booking.html",
         },
         # Kochi -> Munnar
         {
@@ -299,6 +304,7 @@ def search_multimodal_transit(
             "price_inr": 180,
             "availability": "Walk-in / Online",
             "notes": "Scenic mountain climb through Cheeyappara waterfalls and tea gardens.",
+            "booking_url": "https://www.onlineksrtcswift.com/",
         },
     ]
 
@@ -360,6 +366,7 @@ def search_flights(
             "price_trend": "🔥 Lowest in 30 days (14% below average)",
             "meal_included": True,
             "dietary_options": ["Hindu Vegetarian (AVML)", "Jain Meal (VJML)", "Vegan"],
+            "booking_url": "https://www.singaporeair.com/en_UK/in/home#/book/bookflight",
         },
         {
             "id": "flt-6e1005",
@@ -378,6 +385,7 @@ def search_flights(
             "price_trend": "📉 Recent price drop (Save ₹2,100)",
             "meal_included": False,
             "dietary_options": ["Pre-book Vegetarian Sandwich/Biryani"],
+            "booking_url": "https://www.goindigo.in/flight-booking.html",
         },
         {
             "id": "flt-ek565",
@@ -396,6 +404,7 @@ def search_flights(
             "price_trend": "⚡ Stable fare (Good availability)",
             "meal_included": True,
             "dietary_options": ["Vegetarian Jain", "Indian Veg", "Halal"],
+            "booking_url": "https://www.emirates.com/in/english/book/",
         },
         {
             "id": "flt-fz408",
@@ -414,6 +423,7 @@ def search_flights(
             "price_trend": "📉 Budget Pick (Cheapest non-stop to Dubai)",
             "meal_included": False,
             "dietary_options": ["Snack purchase on board"],
+            "booking_url": "https://www.flydubai.com/en/",
         },
         {
             "id": "flt-tg326",
@@ -432,6 +442,7 @@ def search_flights(
             "price_trend": "🔥 Popular seasonal route",
             "meal_included": True,
             "dietary_options": ["Asian Veg", "Indian Veg", "Jain Meal"],
+            "booking_url": "https://www.thaiairways.com/",
         },
         {
             "id": "flt-ba118",
@@ -450,6 +461,7 @@ def search_flights(
             "price_trend": "⚡ Fares rising (Book soon)",
             "meal_included": True,
             "dietary_options": ["Asian Vegetarian (AVML)", "Jain", "Vegan"],
+            "booking_url": "https://www.britishairways.com/travel/home/public/en_in/",
         },
         # Delhi (DEL) Routes
         {
@@ -469,6 +481,7 @@ def search_flights(
             "price_trend": "📉 High baggage allowance special",
             "meal_included": True,
             "dietary_options": ["Authentic Indian Vegetarian", "Jain", "Halal"],
+            "booking_url": "https://www.airindia.com/",
         },
         {
             "id": "flt-nh838",
@@ -487,6 +500,7 @@ def search_flights(
             "price_trend": "🔥 Top rated 5-star service",
             "meal_included": True,
             "dietary_options": ["Vegetarian Oriental", "Indian Veg", "Jain"],
+            "booking_url": "https://www.ana.co.jp/en/in/",
         },
         # Domestic flight picks
         {
@@ -506,6 +520,7 @@ def search_flights(
             "price_trend": "📉 Price drop: ₹950 cheaper than weekend average",
             "meal_included": False,
             "dietary_options": ["Buy on board"],
+            "booking_url": "https://www.goindigo.in/",
         },
         {
             "id": "flt-ai804",
@@ -524,6 +539,7 @@ def search_flights(
             "price_trend": "⚡ Stable fare",
             "meal_included": True,
             "dietary_options": ["Hot Vegetarian snack box"],
+            "booking_url": "https://www.airindia.com/",
         },
     ]
 
@@ -1269,6 +1285,8 @@ Use `search_multimodal_transit` to find trains, buses, cabs, or domestic transit
 Use `search_curated_spots` to query verified local spots from Firestore.
 Use `save_user_itinerary_item` to persist activities or transit legs to the user's itinerary in Firestore.
 Use `get_user_itinerary` to review what the user has currently planned.
+BOOKING LINKS & ACCESS DETAILS:
+Whenever you present flight options, trains, buses, or hotels, you MUST always include clickable links (e.g. `[Book on Singapore Airlines](url)`, `[Book on IRCTC](url)`, `[Book on KSRTC](url)`) or display the official booking URL directly so travelers can immediately open the booking portal, inspect fare details, choose seats, and complete their reservations.
 Always be friendly, culturally attuned, and conscious of travel pace, budgets in ₹ (INR), and dietary requirements.""",
     workflow_description="Analyze the request and return structured UI when appropriate.",
     ui_description=(
