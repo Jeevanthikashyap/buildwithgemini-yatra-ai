@@ -801,11 +801,28 @@ def book_travel_item(
         "created_at": booking_record["booked_at"],
     })
 
+    booking_tag = (
+        f"\n[CONFIRMED_BOOKING]\n"
+        f"Type: {item_type.lower()}\n"
+        f"PNR: {pnr_code}\n"
+        f"Passenger: {passenger_name}\n"
+        f"Title: {title}\n"
+        f"From: {origin}\n"
+        f"To: {destination}\n"
+        f"Date: {start_date}\n"
+        f"Amount: {int(total_cost_inr)}\n"
+        f"Class: Confirmed\n"
+        f"Seat: {details or 'Assigned'}\n"
+        f"Status: CONFIRMED\n"
+        f"[/CONFIRMED_BOOKING]\n"
+    )
+
     return {
         "status": "success",
         "booking_reference": pnr_code,
-        "confirmation_message": f"Successfully confirmed {item_type} booking for {passenger_name}!",
+        "confirmation_message": f"Successfully confirmed {item_type} booking for {passenger_name}! You can now download your official PDF E-Ticket & Receipt directly.",
         "booking_details": booking_record,
+        "e_ticket_tag": booking_tag,
     }
 
 
@@ -1274,28 +1291,29 @@ You find domestic and international flights, search hotels and resorts matching 
 You have safe Python code execution capability in an isolated sandbox environment. When the user asks for exact budget calculations, currency conversions, duration arithmetic, or complex travel math, execute Python code to compute the exact figures.
 Use `search_flights` to find the cheapest international and domestic flights with airlines, stops, and price trends.
 Use `search_hotels` to discover hotels and resorts with user ratings, amenities, and dietary notes (vegetarian, Jain, halal).
-Use `book_travel_item` to instantly book and generate confirmed PNR/reservation codes for flights (domestic and international), trains, buses, and hotels and persist them into the user's Firestore itinerary.
-AUTOMATED BOOKING ENGINE & HUMAN-IN-THE-LOOP (HITL) CHECKPOINTS:
-Travel booking follows the industry-standard Autonomous Co-Pilot pattern with strict Human Checkpoints:
-PHASE 1: WHEN THE USER INITIALLY SAYS "BOOK THIS FLIGHT / TRAIN / BUS / HOTEL":
-1. Check the user's travel profile in Vertex AI Memory (passenger name, meal preference, seating preference).
-2. Explain that the autonomous browser agent is opening the carrier gateway (e.g. IndiGo, Singapore Airlines, KSRTC, IRCTC) and has pre-filled the passenger details and preferences.
-3. State that automation is PAUSED at the mandatory Human Checkpoint before payment authorization and 2FA OTP.
+Use `book_travel_item` to persist confirmed reservations into the user's Firestore itinerary AFTER payment authorization is approved.
+CRITICAL BOOKING RULE — NEVER INSTANTLY CONFIRM WITHOUT HITL CHECKPOINT:
+When the user asks to book or reserve ANY flight, train, bus, or hotel (e.g., "book a bus from blr to chennai", "book this flight", "reserve hotel"):
+DO NOT immediately call `book_travel_item` or declare the reservation finalized!
+Instead, you MUST ALWAYS execute PHASE 1 first:
+1. Announce that the autonomous browser worker is launching and opening the carrier's official booking portal (e.g. KSRTC, IRCTC, IndiGo).
+2. Confirm that passenger details (e.g. Jeevanthi, sleeper/window seat, meal choices) were retrieved and injected from Vertex AI Memory Bank.
+3. State clearly: "Automation is PAUSED before payment authorization. Please review the fare and itinerary details below."
 4. Output the dedicated [HITL_CHECKPOINT] block:
    ```
    [HITL_CHECKPOINT]
-   Carrier: <carrier & flight/train/bus number or hotel name>
+   Carrier: <carrier & route or train/bus/flight number>
    Type: <flight|train|bus|hotel>
    Passenger: <passenger name>
    From: <origin>
    To: <destination>
    Date: <travel date>
-   Fare: <fare amount in INR without commas>
-   Hold_Token: <e.g. HOLD-6E-9A4B2C>
-   URL: <official booking / payment deep link>
+   Fare: <fare amount in INR as a clean number, e.g. 1150>
+   Hold_Token: <e.g. HOLD-KSRTC-92B1>
+   URL: <booking url, e.g. https://www.ksrtc.in>
    [/HITL_CHECKPOINT]
    ```
-   This tag automatically displays the interactive HITL review card in the UI, allowing the user to inspect the details, open the payment window, and authorize the transaction.
+This activates the interactive human checkpoint card in the user's interface, allowing the user to inspect the details, open the payment window, and authorize the transaction.
 
 PHASE 2: WHEN THE USER APPROVES / SAYS "I AUTHORIZED PAYMENT" OR ASKS FOR CONFIRMATION / E-TICKET:
 1. Call `book_travel_item` to persist the confirmed booking and generate the official PNR reference.
